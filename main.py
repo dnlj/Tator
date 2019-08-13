@@ -64,15 +64,16 @@ class EditArea(QWidget):
 		self.updateBindSystems(Input(InputType.MOUSE, event.button()), (False, self.mousePosToCanvasPos(event.pos()))) # TODO: make proper custom event for this?
 			
 	def wheelEvent(self, event: QWheelEvent):
-		self.updateBindSystems(Input(InputType.MOUSE_WHEEL), event.angleDelta().y() / 120)
+		self.updateBindSystems(Input(InputType.MOUSE_WHEEL), event.angleDelta().y())
 		
 	def mouseMoveEvent(self, event: QMouseEvent):
-		self.oldPos = self.curPos
-		self.curPos = self.mousePosToCanvasPos(event.pos())
+		newPos = self.mousePosToCanvasPos(event.pos())
 		
-		if self.oldPos == self.curPos:
+		if newPos == self.curPos:
 			return
 		
+		self.oldPos = self.curPos
+		self.curPos = newPos
 		self.updateBindSystems(Input(InputType.MOUSE, event.button()), (None, self.curPos)) # TODO: make proper event for this?
 	
 	def composeCanvas(self):

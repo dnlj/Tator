@@ -60,22 +60,22 @@ class ActionBrush():
 		self.apply(0)
 		
 	def triggerResize(self, inp: Input, val, inputs):
-		self.brushRadius = int(max(1, self.brushRadius + val))
+		self.brushRadius = int(max(1, self.brushRadius + val/24))
 		
 	def apply(self, value: np.uint8):
-		begin = np.array([self.curPos.y(), self.curPos.x()], dtype=float)
-		end = np.array([self.oldPos.y(), self.oldPos.x()], dtype=float)
+		begin = np.array([self.curPos.y(), self.curPos.x()])
+		end = np.array([self.oldPos.y(), self.oldPos.x()])
 		shape = self.mask.shape
 		rad = self.brushRadius
 		
 		rr, cc = ski.draw.ellipse(begin[0], begin[1], rad, rad, shape=shape)
 		self.mask[rr, cc] = value
 		
-		if (begin != end).all():
+		if not np.array_equal(begin, end):
 			rows = np.empty(4)
 			cols = np.empty(4)
 			
-			rectTan = end - begin
+			rectTan = (end - begin).astype(np.float32)
 			mag = np.linalg.norm(rectTan)
 			rectTan /= mag
 			rectNorm = np.flip(rectTan) * (rad, -rad)
