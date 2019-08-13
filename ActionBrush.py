@@ -63,17 +63,40 @@ class ActionBrush():
 		self.brushRadius = int(max(1, self.brushRadius + val))
 		
 	def apply(self, value: np.uint8):
-		rr, cc = ski.draw.ellipse(
-			self.curPos.y(),
-			self.curPos.x(),
-			self.brushRadius,
-			self.brushRadius,
-			shape=self.mask.shape
-		)
+		begin = np.array([self.curPos.y(), self.curPos.x()], dtype=float)
+		end = np.array([self.oldPos.y(), self.oldPos.x()], dtype=float)
+		shape = self.mask.shape
+		rad = self.brushRadius
 		
+		rr, cc = ski.draw.ellipse(begin[0], begin[1], rad, rad, shape=shape)
 		self.mask[rr, cc] = value
 		
-		# TODO: Line part
+		if (begin != end).all():
+			rows = np.empty(4)
+			cols = np.empty(4)
+			
+			rectTan = end - begin
+			mag = np.linalg.norm(rectTan)
+			rectTan /= mag
+			rectNorm = np.flip(rectTan) * (rad, -rad)
+			
+			rows[0] = begin[0] + rectNorm[0]
+			cols[0] = begin[1] + rectNorm[1]
+			
+			rows[1] = end[0] + rectNorm[0]
+			cols[1] = end[1] + rectNorm[1]
+			
+			rows[2] = end[0] - rectNorm[0]
+			cols[2] = end[1] - rectNorm[1]
+			
+			rows[3] = begin[0] - rectNorm[0]
+			cols[3] = begin[1] - rectNorm[1]
+			
+			rr, cc = ski.draw.polygon(rows, cols, shape=shape)
+			self.mask[rr, cc] = value
+			
+			rr, cc = ski.draw.ellipse(end[0], end[1], rad, rad, shape=shape)
+			self.mask[rr, cc] = value
 			
 	def drawHints(self, canvas: Image, target: QPoint):
 		# TODO: Cache hint layer?
