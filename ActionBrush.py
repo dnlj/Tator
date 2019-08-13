@@ -4,6 +4,7 @@ from PyQt5.QtGui import *
 
 from PIL import Image, ImageDraw
 import numpy as np
+import skimage as ski
 
 from binder import *
 
@@ -41,44 +42,38 @@ class ActionBrush():
 	def pressDraw(self, inp: Input, val, inputs):
 		self.oldPos = val[1]
 		self.curPos = val[1]
-		self.apply((255,0,0))
+		self.apply(255)
 		
 	def triggerDraw(self, inp: Input, val, inputs):
 		self.oldPos = self.curPos
 		self.curPos = val[1]
-		self.apply((255,0,0))
+		self.apply(255)
 		
 	def pressErase(self, inp: Input, val, inputs):
 		self.oldPos = val[1]
 		self.curPos = val[1]
-		self.apply((0,0,0,0))
+		self.apply(0)
 		
 	def triggerErase(self, inp: Input, val, inputs):
 		self.oldPos = self.curPos
 		self.curPos = val[1]
-		self.apply((0,0,0,0))
+		self.apply(0)
 		
 	def triggerResize(self, inp: Input, val, inputs):
 		self.brushSize = int(max(1, self.brushSize + val))
 		
-	def apply(self, color):
-		size = self.brushSize // 2
+	def apply(self, value: np.uint8):
+		rr, cc = ski.draw.ellipse(
+			self.curPos.y(),
+			self.curPos.x(),
+			self.brushSize / 2,
+			self.brushSize / 2,
+			self.mask.shape
+		)
 		
-		start = (self.oldPos.x(), self.oldPos.y())
-		end = (self.curPos.x(), self.curPos.y())
-		draw = ImageDraw.Draw(self.mask)
-		draw.line((start, end), fill=color, width=size * 2)
+		self.mask[rr, cc] = value
 		
-		draw.ellipse((
-			(start[0] - size, start[1] - size),
-			(start[0] + size, start[1] + size)
-		), fill=color)
-		
-		draw.ellipse((
-			(end[0] - size, end[1] - size),
-			(end[0] + size, end[1] + size)
-		), fill=color)
-		del draw
+		# TODO: Line part
 			
 	def drawHints(self, canvas: Image, target: QPoint):
 		size = self.brushSize // 2

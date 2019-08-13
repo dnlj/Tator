@@ -35,8 +35,8 @@ class EditArea(QWidget):
 		self.canvas = QImage(self.base.width(), self.base.height(), QImage.Format_RGBA8888)
 		self.canvas.fill(Qt.transparent)
 		
-		# np.zeros((self.base.heigh(), self.base.width()), dtype=int)
-		self.mask = Image.new("RGBA", (self.base.width(), self.base.height()), (0, 0, 0, 0))
+		self.mask = np.zeros((self.base.height(), self.base.width()), dtype=np.uint8)
+		#self.mask = Image.new("RGBA", (self.base.width(), self.base.height()), (0, 0, 0, 0))
 		
 		self.actionBrush = ActionBrush(self.mask)
 		self.actionFill = ActionFill(self.mask)
@@ -79,9 +79,9 @@ class EditArea(QWidget):
 		with QPainter(self.canvas) as painter:
 			painter.drawImage(0, 0, self.base)
 
-			painter.setOpacity(0.5)
-			painter.drawImage(0, 0, ImageQt.ImageQt(self.mask))
-			painter.setOpacity(1.0)
+			maskToQt = QImage(self.mask.data, self.mask.shape[1], self.mask.shape[0], QImage.Format_Indexed8)
+			maskToQt.setColorTable([0] * 255 + [qRgba(255,0,0,127)])
+			painter.drawImage(0, 0, maskToQt)
 			
 		# TODO: Convert self.activeAction.drawHints(self.canvas, self.curPos)
 		
@@ -113,7 +113,7 @@ class EditArea(QWidget):
 		# TODO: switch to Pillow resize here
 		self.composeCanvas()
 		painter.drawImage(self.scaledOffset, self.canvas.scaled(self.scaledSize))
-		#painter.drawImage(QPoint(), ImageQt.ImageQt(self.canvas))
+		#painter.drawImage(QPoint(), self.canvas)
 		
 		
 ################################################################################		
