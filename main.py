@@ -64,7 +64,7 @@ class EditArea(QWidget):
 		self.updateBindSystems(Input(InputType.MOUSE, event.button()), (False, self.mousePosToCanvasPos(event.pos()))) # TODO: make proper custom event for this?
 			
 	def wheelEvent(self, event: QWheelEvent):
-		self.updateBindSystems(Input(InputType.MOUSE_WHEEL), event.angleDelta().y() / 60)
+		self.updateBindSystems(Input(InputType.MOUSE_WHEEL), event.angleDelta().y() / 120)
 		
 	def mouseMoveEvent(self, event: QMouseEvent):
 		self.oldPos = self.curPos
@@ -83,7 +83,7 @@ class EditArea(QWidget):
 			maskToQt.setColorTable([0] * 255 + [qRgba(255,0,0,127)])
 			painter.drawImage(0, 0, maskToQt)
 			
-		# TODO: Convert self.activeAction.drawHints(self.canvas, self.curPos)
+		self.activeAction.drawHints(self.canvas, self.curPos)
 		
 	def paintEvent(self, event: QPaintEvent):
 		# TODO: Make use of event.rect(), may get better performance

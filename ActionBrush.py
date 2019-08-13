@@ -34,7 +34,7 @@ class ActionBrush():
 		self.binds.addListener("resize", BindEvent.TRIGGER, self.triggerResize)
 		
 		self.mask = mask
-		self.brushSize = 40
+		self.brushRadius = 20
 		
 		self.oldPos = QPoint()
 		self.curPos = QPoint()
@@ -60,15 +60,15 @@ class ActionBrush():
 		self.apply(0)
 		
 	def triggerResize(self, inp: Input, val, inputs):
-		self.brushSize = int(max(1, self.brushSize + val))
+		self.brushRadius = int(max(1, self.brushRadius + val))
 		
 	def apply(self, value: np.uint8):
 		rr, cc = ski.draw.ellipse(
 			self.curPos.y(),
 			self.curPos.x(),
-			self.brushSize / 2,
-			self.brushSize / 2,
-			self.mask.shape
+			self.brushRadius,
+			self.brushRadius,
+			shape=self.mask.shape
 		)
 		
 		self.mask[rr, cc] = value
@@ -76,9 +76,23 @@ class ActionBrush():
 		# TODO: Line part
 			
 	def drawHints(self, canvas: Image, target: QPoint):
-		size = self.brushSize // 2
-		xyMin = (target.x() - size, target.y() - size)
-		xyMax = (target.x() + size, target.y() + size)
-		draw = ImageDraw.Draw(canvas)
-		draw.ellipse([xyMin, xyMax], outline=(0,0,0))
-		del draw
+		# TODO: Cache hint layer?
+		shape = (canvas.height(), canvas.width())
+		hints = np.zeros(shape, dtype=np.uint8)
+		x = target.x()
+		y = target.y()
+		rad = self.brushRadius
+		
+		rr, cc = ski.draw.ellipse(y, x, rad, rad, shape=shape)
+		hints[rr, cc] = 255
+		
+		if rad > 1:
+			rad -= 1
+			rr, cc = ski.draw.ellipse(y, x, rad, rad, shape=shape)
+			hints[rr, cc] = 0
+		
+		with QPainter(canvas) as painter:
+			hintsToQt = QImage(hints.data, hints.shape[1], hints.shape[0], QImage.Format_Indexed8)
+			hintsToQt.setColorTable([0] * 255 + [qRgba(0,0,0,127)])
+			painter.drawImage(0, 0, hintsToQt)
+			
