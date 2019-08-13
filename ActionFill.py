@@ -19,7 +19,7 @@ class ActionFill():
 		
 	def pressFill(self, inp: Input, val, inputs):
 		# TODO: this takes seconds. Try doing manually
-		ImageDraw.floodfill(self.mask, (val[1].x(), val[1].y()), (0,255,0,127))
+		ImageDraw.floodfill(self.mask, (val[1].x(), val[1].y()), (0,255,0))
 	
 	# TODO: make base class so we dont need this
 	def drawHints(self, canvas, target):

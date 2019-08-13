@@ -41,12 +41,12 @@ class ActionBrush():
 	def pressDraw(self, inp: Input, val, inputs):
 		self.oldPos = val[1]
 		self.curPos = val[1]
-		self.apply((255,0,0,127))
+		self.apply((255,0,0))
 		
 	def triggerDraw(self, inp: Input, val, inputs):
 		self.oldPos = self.curPos
 		self.curPos = val[1]
-		self.apply((255,0,0,127))
+		self.apply((255,0,0))
 		
 	def pressErase(self, inp: Input, val, inputs):
 		self.oldPos = val[1]

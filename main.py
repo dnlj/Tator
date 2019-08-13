@@ -30,9 +30,13 @@ class EditArea(QWidget):
 		self.points = []
 		
 		# TODO: Change to numpy + skimage
-		self.base = Image.open("test3.jpg").convert(mode="RGBA")
-		self.canvas = Image.new("RGBA", self.base.size, (0, 0, 0, 0))
-		self.mask = Image.new("RGBA", self.base.size, (0, 0, 0, 0))
+		self.base = QImage("test3.jpg")
+		
+		self.canvas = QImage(self.base.width(), self.base.height(), QImage.Format_RGBA8888)
+		self.canvas.fill(Qt.transparent)
+		
+		# np.zeros((self.base.heigh(), self.base.width()), dtype=int)
+		self.mask = Image.new("RGBA", (self.base.width(), self.base.height()), (0, 0, 0, 0))
 		
 		self.actionBrush = ActionBrush(self.mask)
 		self.actionFill = ActionFill(self.mask)
@@ -40,8 +44,8 @@ class EditArea(QWidget):
 		self.activeAction = self.actionBrush
 		
 	def resizeEvent(self, event: QResizeEvent):
-		self.scaledScale = min(self.width() / self.base.width, self.height() / self.base.height)
-		self.scaledSize = QSize(self.base.width, self.base.height) * self.scaledScale
+		self.scaledScale = min(self.width() / self.base.width(), self.height() / self.base.height())
+		self.scaledSize = self.base.size() * self.scaledScale
 		self.scaledOffset = (self.size() - self.scaledSize) / 2
 		self.scaledOffset = QPoint(self.scaledOffset.width(), self.scaledOffset.height())
 		
@@ -72,9 +76,14 @@ class EditArea(QWidget):
 		self.updateBindSystems(Input(InputType.MOUSE, event.button()), (None, self.curPos)) # TODO: make proper event for this?
 	
 	def composeCanvas(self):
-		self.canvas = self.base.copy()
-		self.canvas.alpha_composite(self.mask)
-		self.activeAction.drawHints(self.canvas, self.curPos)
+		with QPainter(self.canvas) as painter:
+			painter.drawImage(0, 0, self.base)
+
+			painter.setOpacity(0.5)
+			painter.drawImage(0, 0, ImageQt.ImageQt(self.mask))
+			painter.setOpacity(1.0)
+			
+		# TODO: Convert self.activeAction.drawHints(self.canvas, self.curPos)
 		
 	def paintEvent(self, event: QPaintEvent):
 		# TODO: Make use of event.rect(), may get better performance
@@ -103,7 +112,7 @@ class EditArea(QWidget):
 		# Draw Canvas
 		# TODO: switch to Pillow resize here
 		self.composeCanvas()
-		painter.drawImage(self.scaledOffset, ImageQt.ImageQt(self.canvas).scaled(self.scaledSize))
+		painter.drawImage(self.scaledOffset, self.canvas.scaled(self.scaledSize))
 		#painter.drawImage(QPoint(), ImageQt.ImageQt(self.canvas))
 		
 		
