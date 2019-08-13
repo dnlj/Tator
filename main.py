@@ -1,8 +1,14 @@
 from typing import Any, Callable, List, Tuple, Dict
 from collections import *
+
+from PIL import Image, ImageQt, ImageDraw
+
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
+
+import numpy as np
+
 from binder import *
 from ActionBrush import ActionBrush
 
@@ -21,22 +27,18 @@ class EditArea(QWidget):
 		self.curPos = QPoint()
 		self.oldPos = QPoint()
 		self.points = []
-			
-		self.base = QImage("test3.jpg")
 		
-		self.canvas = QImage(self.base.width(), self.base.height(), QImage.Format_RGBA8888)
-		self.canvas.fill(Qt.transparent)
-		
-		self.mask = QImage(self.base.width(), self.base.height(), QImage.Format_RGBA8888) # TODO: Look at Pillow ImageQt
-		self.mask.fill(Qt.transparent)
+		self.base = Image.open("test3.jpg").convert(mode="RGBA")
+		self.canvas = Image.new("RGBA", self.base.size, (0, 0, 0, 0))
+		self.mask = Image.new("RGBA", self.base.size, (0, 0, 0, 0))
 		
 		self.actionBrush = ActionBrush(self.mask)
 		
 		self.activeAction = self.actionBrush
 		
 	def resizeEvent(self, event: QResizeEvent):
-		self.scaledScale = min(self.width() / self.base.width(), self.height() / self.base.height())
-		self.scaledSize = self.base.size() * self.scaledScale
+		self.scaledScale = min(self.width() / self.base.width, self.height() / self.base.height)
+		self.scaledSize = QSize(self.base.width, self.base.height) * self.scaledScale
 		self.scaledOffset = (self.size() - self.scaledSize) / 2
 		self.scaledOffset = QPoint(self.scaledOffset.width(), self.scaledOffset.height())
 		
@@ -67,13 +69,8 @@ class EditArea(QWidget):
 		self.updateBindSystems(Input(InputType.MOUSE, event.button()), (None, self.curPos)) # TODO: make proper event for this?
 	
 	def composeCanvas(self):
-		with QPainter(self.canvas) as painter:
-			painter.drawImage(0, 0, self.base)
-			
-			painter.setOpacity(0.5)
-			painter.drawImage(0, 0, self.mask)
-			painter.setOpacity(1.0)
-		
+		self.canvas = self.base.copy()
+		self.canvas.alpha_composite(self.mask)
 		self.activeAction.drawHints(self.canvas, self.curPos)
 		
 	def paintEvent(self, event: QPaintEvent):
@@ -101,9 +98,10 @@ class EditArea(QWidget):
 		painter.drawRect(0, 0, w, h)
 		
 		# Draw Canvas
-		# TODO: I Imagine this is the slowest part
+		# TODO: switch to Pillow resize here
 		self.composeCanvas()
-		painter.drawImage(self.scaledOffset, self.canvas.scaled(self.scaledSize))
+		painter.drawImage(self.scaledOffset, ImageQt.ImageQt(self.canvas).scaled(self.scaledSize))
+		#painter.drawImage(QPoint(), ImageQt.ImageQt(self.canvas))
 		
 		
 ################################################################################		
