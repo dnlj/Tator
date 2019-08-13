@@ -42,7 +42,7 @@ class BindEvent:
 ################################################################################
 class Bind:
 	# TODO: change to use addListener pattern instead of passing in constructor
-	def __init__(self, name: str, inputs: List[InputComparePair], triggers):
+	def __init__(self, name: str, inputs: List[InputComparePair], triggers = []):
 		self.name = name
 		self.inputs = {}
 		self.triggers = {}

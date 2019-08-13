@@ -11,6 +11,7 @@ import numpy as np
 
 from binder import *
 from ActionBrush import ActionBrush
+from ActionFill import ActionFill
 
 # Flood fill
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
@@ -28,11 +29,13 @@ class EditArea(QWidget):
 		self.oldPos = QPoint()
 		self.points = []
 		
+		# TODO: Change to numpy + skimage
 		self.base = Image.open("test3.jpg").convert(mode="RGBA")
 		self.canvas = Image.new("RGBA", self.base.size, (0, 0, 0, 0))
 		self.mask = Image.new("RGBA", self.base.size, (0, 0, 0, 0))
 		
 		self.actionBrush = ActionBrush(self.mask)
+		self.actionFill = ActionFill(self.mask)
 		
 		self.activeAction = self.actionBrush
 		
