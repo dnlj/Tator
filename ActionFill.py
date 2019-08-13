@@ -1,10 +1,13 @@
 from binder import *
 
+import numpy as np
+import skimage as ski
+import skimage.segmentation as skis
+
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from PIL import Image, ImageDraw
 
 class ActionFill():
 	def __init__(self, mask: QImage):
@@ -18,8 +21,7 @@ class ActionFill():
 		self.mask = mask
 		
 	def pressFill(self, inp: Input, val, inputs):
-		# TODO: this takes seconds. Try doing manually
-		ImageDraw.floodfill(self.mask, (val[1].x(), val[1].y()), (0,255,0))
+		skis.flood_fill(self.mask, (val[1].y(), val[1].x()), 255, inplace=True)
 	
 	# TODO: make base class so we dont need this
 	def drawHints(self, canvas, target):

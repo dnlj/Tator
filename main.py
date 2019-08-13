@@ -18,6 +18,8 @@ from ActionFill import ActionFill
 #	https://stackoverflow.com/questions/16705721/opencv-floodfill-with-mask
 # https://www.cc.gatech.edu/~aagrawal307/magic.pdf
 
+# TODO: change events to send np arrays instead of QPoints
+
 ################################################################################
 class EditArea(QWidget):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
@@ -38,10 +40,14 @@ class EditArea(QWidget):
 		self.mask = np.zeros((self.base.height(), self.base.width()), dtype=np.uint8)
 		#self.mask = Image.new("RGBA", (self.base.width(), self.base.height()), (0, 0, 0, 0))
 		
-		self.actionBrush = ActionBrush(self.mask)
-		self.actionFill = ActionFill(self.mask)
+		self.actions = {}
+		self.actions[ActionBrush] = ActionBrush(self.mask)
+		self.actions[ActionFill] = ActionFill(self.mask)
 		
-		self.activeAction = self.actionBrush
+		self.activeAction = self.actions[ActionBrush]
+		
+	def setAction(self, action):
+		self.activeAction = self.actions[action]
 		
 	def resizeEvent(self, event: QResizeEvent):
 		self.scaledScale = min(self.width() / self.base.width(), self.height() / self.base.height())
@@ -127,15 +133,16 @@ class MainWindow(QMainWindow):
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
 		
-		self.setCentralWidget(EditArea())
+		editArea = EditArea()
+		self.setCentralWidget(editArea)
 		
 		# TODO: Toolbar
 		self.toolbar = QToolBar("Tools")
 		self.toolbar.addAction("Box")
 		self.toolbar.addAction("Polygon")
 		self.toolbar.addSeparator()
-		self.toolbar.addAction("Brush")
-		self.toolbar.addAction("Fill")
+		self.toolbar.addAction("Brush", lambda: editArea.setAction(ActionBrush))
+		self.toolbar.addAction("Fill", lambda: editArea.setAction(ActionFill))
 		self.toolbar.addAction("Wand Select")
 		self.toolbar.addSeparator()
 		self.toolbar.addAction("Smart Select")

@@ -2,14 +2,13 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from PIL import Image, ImageDraw
 import numpy as np
 import skimage as ski
 
 from binder import *
 
 class ActionBrush():
-	def __init__(self, mask: Image):
+	def __init__(self, mask: np.ndarray):
 		self.binds = BindSystem()
 		
 		self.binds.addBind(Bind("draw",
@@ -98,7 +97,7 @@ class ActionBrush():
 			rr, cc = ski.draw.ellipse(end[0], end[1], rad, rad, shape=shape)
 			self.mask[rr, cc] = value
 			
-	def drawHints(self, canvas: Image, target: QPoint):
+	def drawHints(self, canvas: QImage, target: QPoint):
 		# TODO: Cache hint layer?
 		shape = (canvas.height(), canvas.width())
 		hints = np.zeros(shape, dtype=np.uint8)
