@@ -19,7 +19,18 @@ from ActionFill import ActionFill
 # https://www.cc.gatech.edu/~aagrawal307/magic.pdf
 
 # TODO: change events to send np arrays instead of QPoints
+# TODO: Undo/Redo
+# TODO: cursor per tool
+# TODO: Tool shortcuts
+# TODO: Tool options menu
+# TODO: Switch visible tools depending on active layer type
 
+################################################################################
+class LayerBitmap:
+	def __init__(self):
+		self.mask = None
+		self.label = "This is the layer label"
+		self.visible = True
 ################################################################################
 class EditArea(QWidget):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
@@ -31,14 +42,16 @@ class EditArea(QWidget):
 		self.oldPos = QPoint()
 		self.points = []
 		
-		# TODO: Change to numpy + skimage
 		self.base = QImage("test3.jpg")
 		
 		self.canvas = QImage(self.base.width(), self.base.height(), QImage.Format_RGBA8888)
 		self.canvas.fill(Qt.transparent)
 		
+		#self.layers = []
+		#self.layers.append(LayerBitmap())
+		#self.activeLayer = layers[0]
+		
 		self.mask = np.zeros((self.base.height(), self.base.width()), dtype=np.uint8)
-		#self.mask = Image.new("RGBA", (self.base.width(), self.base.height()), (0, 0, 0, 0))
 		
 		self.actions = {}
 		self.actions[ActionBrush] = ActionBrush(self.mask)
@@ -122,8 +135,75 @@ class EditArea(QWidget):
 		painter.drawImage(self.scaledOffset, self.canvas.scaled(self.scaledSize))
 		#painter.drawImage(QPoint(), self.canvas)
 		
+################################################################################
+class LayerTableItemDelegate(QStyledItemDelegate):
+	def __init__(self):
+		return super().__init__()
 		
-################################################################################		
+################################################################################
+class LayerTableModel(QAbstractTableModel):
+	def __init__(self):
+		super().__init__()
+		
+		self.rowMapping = {
+			0: "visible",
+			1: "label",
+		}
+		
+		self.layers = []
+		for i in range(0, 10):
+			self.layers.append(LayerBitmap())
+		
+	def flags(self, index: QModelIndex):
+		flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
+		row = index.row()
+		col = index.column()
+		
+		if col == 0:
+			return flags | Qt.ItemIsUserCheckable | Qt.ItemIsEditable
+		
+		return flags
+	
+	def rowCount(self, parent):
+		return len(self.layers)
+		
+	def columnCount(self, parent):
+		return len(self.rowMapping)
+		
+	def data(self, index: QModelIndex, role: int):
+		row = index.row()
+		col = index.column()
+		
+		if role == Qt.CheckStateRole and col == 0:
+			checked = getattr(self.layers[row], self.rowMapping[col])
+			return checked and Qt.Checked or Qt.Unchecked
+		if role == Qt.DisplayRole:
+			return getattr(self.layers[row], self.rowMapping[col])
+		return None
+################################################################################
+class LayerTableView(QTableView): # See https://doc.qt.io/qt-5/qtnetwork-torrent-example.html
+	def __init__(self):
+		super().__init__()
+				
+		self.layerModel = LayerTableModel()
+		self.setModel(self.layerModel)
+		self.setItemDelegate(LayerTableItemDelegate())
+		
+		self.setSelectionBehavior(QAbstractItemView.SelectRows)
+		self.setSelectionMode(QAbstractItemView.SingleSelection)
+				
+		self.horizontalHeader().hide()
+		self.verticalHeader().hide()
+		self.resizeColumnsToContents()
+		self.resizeRowsToContents()
+		
+		#self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+				
+		# TODO: Layer selection (dropdown?)
+		# TODO: Add button
+		# TODO: Del button
+		
+################################################################################
 class MainWindow(QMainWindow):
 	def __init__(self):
 		super().__init__()
@@ -147,14 +227,18 @@ class MainWindow(QMainWindow):
 		self.toolbar.addSeparator()
 		self.toolbar.addAction("Smart Select")
 		
-		self.imagePanel = QDockWidget("Image Panel")
+		# TODO: Look into flow layout
+		self.imagePanel = QDockWidget("Images Panel")
 		self.imagePanel.setFeatures(windowFeatures)
 		
-		self.labelPanel = QDockWidget("Label Panel")
+		self.labelPanel = QDockWidget("Labels Panel")
 		self.labelPanel.setFeatures(windowFeatures)
 		
-		self.layerPanel = QDockWidget("Layer Panel")
+		
+		layersView = LayerTableView()
+		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
+		self.layerPanel.setWidget(layersView)
 		
 		self.addToolBar(self.toolbar)
 		self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)
