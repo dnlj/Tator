@@ -136,77 +136,121 @@ class EditArea(QWidget):
 		#painter.drawImage(QPoint(), self.canvas)
 		
 ################################################################################
-class LayerTableItemDelegate(QStyledItemDelegate):
-	def __init__(self):
-		return super().__init__()
+class LayerView(QWidget):
+	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+		super().__init__(parent=parent, flags=flags)
+		
+		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+		
+		layout = QHBoxLayout()
+		self.setLayout(layout)
+		
+		layout.addWidget(QCheckBox()) # TODO: Custom eye icons?
+		# TODO: Layer Preview
+		layout.addWidget(QLabel("This is the label")) # TODO: Dropdown to select
+		layout.addWidget(QLabel("[B]")) # TODO: Icon
+		layout.addWidget(QPushButton("-"))
+		
+		# TODO: override paint? call super().paint ?
+		pal = QPalette()
+		pal.setColor(QPalette.Background, Qt.red)
+		self.setAutoFillBackground(True)
+		self.setPalette(pal)
+		
+	def mousePressEvent(self, event):
+		if event.button() == Qt.LeftButton: # TODO: Change to bind system
+			self.parent().setLayerSelection(self) # TODO: Look at https://doc.qt.io/qt-5/signalsandslots.html
 		
 ################################################################################
-class LayerTableModel(QAbstractTableModel):
-	def __init__(self):
-		super().__init__()
+class LayerListViewContainer(QWidget): # TODO: Rename all this layer stuff. its bad LayerViewList
+	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+		super().__init__(parent=parent, flags=flags)
 		
-		self.rowMapping = {
-			0: "visible",
-			1: "label",
-		}
+		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+		self.layout = QVBoxLayout()
+		self.layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
+		self.setLayout(self.layout)
 		
-		self.layers = []
+		pal = QPalette()
+		pal.setColor(QPalette.Background, QColor(255, 255, 0))
+		self.setAutoFillBackground(True)
+		self.setPalette(pal)
+		
+	def addLayer(self):
+		self.layout.addWidget(LayerView(self))
+		
+	def setLayerSelection(self, layer: LayerView):
+		print("WOOOp", layer)
+################################################################################
+class LayerListView(QScrollArea):
+	def __init__(self, parent=None):
+		super().__init__(parent=parent)
+		
+		self.setFrameShape(QFrame.NoFrame)
+		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+		self.setWidgetResizable(True)
+		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
+		
+		self.layerContainer = LayerListViewContainer(self)
+		self.setWidget(self.layerContainer)
+		
 		for i in range(0, 10):
-			self.layers.append(LayerBitmap())
+			self.layerContainer.addLayer()
 		
-	def flags(self, index: QModelIndex):
-		flags = Qt.ItemIsSelectable | Qt.ItemIsEnabled
-		row = index.row()
-		col = index.column()
+		#this = QWidget()
+		#self.setWidget(this)
+		#this.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+		#
+		#layout = QVBoxLayout()
+		#layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
+		#this.setLayout(layout)
+		#print("Self: ", self)
+		#print("This: ", this)
+		#for i in range(0,10):
+		#	layout.addWidget(LayerView(this))
+		#this.adjustSize()
 		
-		if col == 0:
-			return flags | Qt.ItemIsUserCheckable | Qt.ItemIsEditable
+		self.setMinimumWidth(self.sizeHint().width() + self.verticalScrollBar().sizeHint().width())
 		
-		return flags
-	
-	def rowCount(self, parent):
-		return len(self.layers)
+		pal = QPalette()
+		pal.setColor(QPalette.Background, Qt.blue)
+		self.setAutoFillBackground(True)
+		self.setPalette(pal)
+class LayerListViewToolbar(QWidget):
+	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+		super().__init__(parent=parent, flags=flags)
 		
-	def columnCount(self, parent):
-		return len(self.rowMapping)
+		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
 		
-	def data(self, index: QModelIndex, role: int):
-		row = index.row()
-		col = index.column()
+		layout = QHBoxLayout()
+		layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
+		layout.addWidget(QPushButton("New Bitmap"))
+		layout.addWidget(QPushButton("New Vector"))
+		self.setLayout(layout)
 		
-		if role == Qt.CheckStateRole and col == 0:
-			checked = getattr(self.layers[row], self.rowMapping[col])
-			return checked and Qt.Checked or Qt.Unchecked
-		if role == Qt.DisplayRole:
-			return getattr(self.layers[row], self.rowMapping[col])
-		return None
-################################################################################
-class LayerTableView(QTableView): # See https://doc.qt.io/qt-5/qtnetwork-torrent-example.html
-	def __init__(self):
-		super().__init__()
-				
-		self.layerModel = LayerTableModel()
-		self.setModel(self.layerModel)
-		self.setItemDelegate(LayerTableItemDelegate())
+		pal = QPalette()
+		pal.setColor(QPalette.Background, Qt.green)
+		self.setAutoFillBackground(True)
+		self.setPalette(pal)
 		
-		self.setSelectionBehavior(QAbstractItemView.SelectRows)
-		self.setSelectionMode(QAbstractItemView.SingleSelection)
-				
-		self.horizontalHeader().hide()
-		self.verticalHeader().hide()
-		self.resizeColumnsToContents()
-		self.resizeRowsToContents()
+class LayerListWidget(QWidget):
+	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+		super().__init__(parent=parent, flags=flags)
 		
-		#self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
-				
-		# TODO: Layer selection (dropdown?)
-		# TODO: Add button
-		# TODO: Del button
+		self.listView = LayerListView(self)
+		self.toolbar = LayerListViewToolbar(self)
+		
+		layout = QVBoxLayout()
+		layout.addWidget(self.listView)
+		layout.addWidget(self.toolbar)
+		self.setLayout(layout)
 		
 ################################################################################
 class MainWindow(QMainWindow):
-	def __init__(self):
-		super().__init__()
+	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+		super().__init__(parent=parent, flags=flags)
+		
 		windowFeatures = QDockWidget.DockWidgetMovable
 		
 		self.setWindowTitle("Tator")
@@ -234,11 +278,9 @@ class MainWindow(QMainWindow):
 		self.labelPanel = QDockWidget("Labels Panel")
 		self.labelPanel.setFeatures(windowFeatures)
 		
-		
-		layersView = LayerTableView()
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
-		self.layerPanel.setWidget(layersView)
+		self.layerPanel.setWidget(LayerListWidget())
 		
 		self.addToolBar(self.toolbar)
 		self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)
