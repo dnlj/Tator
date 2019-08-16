@@ -156,33 +156,42 @@ class LayerView(QWidget):
 		pal.setColor(QPalette.Background, Qt.red)
 		self.setAutoFillBackground(True)
 		self.setPalette(pal)
-		
+	
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton: # TODO: Change to bind system
 			self.parent().setLayerSelection(self) # TODO: Look at https://doc.qt.io/qt-5/signalsandslots.html
+			
+	def setSelected(self, value: bool):
+		pal = QPalette() # TODO: surely not the best way to handle this. Look into style sheets?
+		if value:
+			pal.setColor(QPalette.Background, Qt.blue)
+		else:
+			pal.setColor(QPalette.Background, Qt.red)
+		self.setPalette(pal)
 		
 ################################################################################
-class LayerListViewContainer(QWidget): # TODO: Rename all this layer stuff. its bad LayerViewList
+class LayerViewList(QWidget):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
-		
+		self.selected = None
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 		self.layout = QVBoxLayout()
 		self.layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
 		self.setLayout(self.layout)
 		
-		pal = QPalette()
-		pal.setColor(QPalette.Background, QColor(255, 255, 0))
-		self.setAutoFillBackground(True)
-		self.setPalette(pal)
-		
 	def addLayer(self):
-		self.layout.addWidget(LayerView(self))
+		layer = LayerView()
+		if not self.selected:
+			self.selected = layer
+			layer.setSelected(True)
+		self.layout.addWidget(layer)
 		
 	def setLayerSelection(self, layer: LayerView):
-		print("WOOOp", layer)
+		self.selected.setSelected(False)
+		self.selected = layer
+		self.selected.setSelected(True)
 ################################################################################
-class LayerListView(QScrollArea):
+class LayerViewListScroll(QScrollArea):
 	def __init__(self, parent=None):
 		super().__init__(parent=parent)
 		
@@ -192,32 +201,17 @@ class LayerListView(QScrollArea):
 		self.setWidgetResizable(True)
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 		
-		self.layerContainer = LayerListViewContainer(self)
-		self.setWidget(self.layerContainer)
+		self.layerViewList = LayerViewList()
+		self.setWidget(self.layerViewList)
 		
-		for i in range(0, 10):
-			self.layerContainer.addLayer()
+	def sizeHint(self):
+		return self.layerViewList.sizeHint() + self.verticalScrollBar().sizeHint()
 		
-		#this = QWidget()
-		#self.setWidget(this)
-		#this.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
-		#
-		#layout = QVBoxLayout()
-		#layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
-		#this.setLayout(layout)
-		#print("Self: ", self)
-		#print("This: ", this)
-		#for i in range(0,10):
-		#	layout.addWidget(LayerView(this))
-		#this.adjustSize()
+	def addLayer(self):
+		self.layerViewList.addLayer()
+		self.updateGeometry()
 		
-		self.setMinimumWidth(self.sizeHint().width() + self.verticalScrollBar().sizeHint().width())
-		
-		pal = QPalette()
-		pal.setColor(QPalette.Background, Qt.blue)
-		self.setAutoFillBackground(True)
-		self.setPalette(pal)
-class LayerListViewToolbar(QWidget):
+class LayerListToolbar(QWidget):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		
@@ -225,8 +219,12 @@ class LayerListViewToolbar(QWidget):
 		
 		layout = QHBoxLayout()
 		layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
-		layout.addWidget(QPushButton("New Bitmap"))
+		
+		self.newBitmapButton = QPushButton("New Bitmap")
+		layout.addWidget(self.newBitmapButton)
+		
 		layout.addWidget(QPushButton("New Vector"))
+		
 		self.setLayout(layout)
 		
 		pal = QPalette()
@@ -238,13 +236,18 @@ class LayerListWidget(QWidget):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		
-		self.listView = LayerListView(self)
-		self.toolbar = LayerListViewToolbar(self)
+		self.listView = LayerViewListScroll()
+		self.toolbar = LayerListToolbar()
+		
+		self.toolbar.newBitmapButton.clicked.connect(self.onNewBitmapClicked)
 		
 		layout = QVBoxLayout()
 		layout.addWidget(self.listView)
 		layout.addWidget(self.toolbar)
 		self.setLayout(layout)
+		
+	def onNewBitmapClicked(self):
+		self.listView.addLayer()
 		
 ################################################################################
 class MainWindow(QMainWindow):
