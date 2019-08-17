@@ -33,6 +33,8 @@ class LayerBitmap:
 		self.visible = True
 ################################################################################
 class EditArea(QWidget):
+	onLayerAdded = pyqtSignal()
+	
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.binds = BindSystem()
@@ -47,7 +49,8 @@ class EditArea(QWidget):
 		self.canvas = QImage(self.base.width(), self.base.height(), QImage.Format_RGBA8888)
 		self.canvas.fill(Qt.transparent)
 		
-		#self.layers = []
+		# TODO: should layers be stored on the widget? seems out of place
+		self.layers = []
 		#self.layers.append(LayerBitmap())
 		#self.activeLayer = layers[0]
 		
@@ -58,6 +61,10 @@ class EditArea(QWidget):
 		self.actions[ActionFill] = ActionFill(self.mask)
 		
 		self.activeAction = self.actions[ActionBrush]
+		
+	def addLayer(self, layer):
+		self.layers.append(layer)
+		self.onLayerAdded.emit()
 		
 	def setAction(self, action):
 		self.activeAction = self.actions[action]
@@ -137,9 +144,9 @@ class EditArea(QWidget):
 		
 ################################################################################
 class LayerView(QWidget):
-	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, layer, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
-		
+		self.layer = layer
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 		
 		layout = QHBoxLayout()
@@ -156,9 +163,9 @@ class LayerView(QWidget):
 		pal.setColor(QPalette.Background, Qt.red)
 		self.setAutoFillBackground(True)
 		self.setPalette(pal)
-	
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton: # TODO: Change to bind system
+			# TODO: lookinto signals for this
 			self.parent().setLayerSelection(self) # TODO: Look at https://doc.qt.io/qt-5/signalsandslots.html
 			
 	def setSelected(self, value: bool):
@@ -171,28 +178,40 @@ class LayerView(QWidget):
 		
 ################################################################################
 class LayerViewList(QWidget):
-	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, layers, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.selected = None
+		self.layers = layers
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 		self.layout = QVBoxLayout()
 		self.layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
 		self.setLayout(self.layout)
+		self.updateLayers()
 		
-	def addLayer(self):
-		layer = LayerView()
-		if not self.selected:
-			self.selected = layer
-			layer.setSelected(True)
-		self.layout.addWidget(layer)
+	def updateLayers(self):
+		selectedLayer = self.selected and self.selected.layer or None
 		
-	def setLayerSelection(self, layer: LayerView):
-		self.selected.setSelected(False)
-		self.selected = layer
+		# TODO: how do i delete a widget? This doesnt work
+		while True:
+			taken = self.layout.takeAt(0)
+			if taken is not None:
+				taken.widget().deleteLater()
+			else:
+				break
+		for layer in self.layers:
+			layerView = LayerView(layer)
+			self.layout.addWidget(layerView)
+			if layer is selectedLayer:
+				self.setLayerSelection(layerView)
+		
+	def setLayerSelection(self, layerView: LayerView):
+		if self.selected:
+			self.selected.setSelected(False)
+		self.selected = layerView
 		self.selected.setSelected(True)
 ################################################################################
 class LayerViewListScroll(QScrollArea):
-	def __init__(self, parent=None):
+	def __init__(self, layers, parent=None):
 		super().__init__(parent=parent)
 		
 		self.setFrameShape(QFrame.NoFrame)
@@ -201,16 +220,16 @@ class LayerViewListScroll(QScrollArea):
 		self.setWidgetResizable(True)
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 		
-		self.layerViewList = LayerViewList()
+		self.layerViewList = LayerViewList(layers=layers)
 		self.setWidget(self.layerViewList)
 		
 	def sizeHint(self):
 		return self.layerViewList.sizeHint() + self.verticalScrollBar().sizeHint()
 		
-	def addLayer(self):
-		self.layerViewList.addLayer()
-		self.updateGeometry()
-		
+	def updateLayers(self):
+		self.layerViewList.updateLayers()
+		self.updateGeometry() # TODO: can we move this into layerListView udpateLayers? does it propogate back up?
+################################################################################
 class LayerListToolbar(QWidget):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
@@ -231,24 +250,25 @@ class LayerListToolbar(QWidget):
 		pal.setColor(QPalette.Background, Qt.green)
 		self.setAutoFillBackground(True)
 		self.setPalette(pal)
-		
+################################################################################		
 class LayerListWidget(QWidget):
-	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, layers, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		
-		self.listView = LayerViewListScroll()
+		self.listView = LayerViewListScroll(layers=layers)
 		self.toolbar = LayerListToolbar()
 		
-		self.toolbar.newBitmapButton.clicked.connect(self.onNewBitmapClicked)
+		#self.toolbar.newBitmapButton.clicked.connect(self.onNewBitmapClicked)
+		
+		self.onNewBitmapClicked = self.toolbar.newBitmapButton.clicked
 		
 		layout = QVBoxLayout()
 		layout.addWidget(self.listView)
 		layout.addWidget(self.toolbar)
 		self.setLayout(layout)
-		
-	def onNewBitmapClicked(self):
-		self.listView.addLayer()
-		
+	
+	def updateLayers(self):
+		self.listView.updateLayers()
 ################################################################################
 class MainWindow(QMainWindow):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
@@ -260,8 +280,8 @@ class MainWindow(QMainWindow):
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
 		
-		editArea = EditArea()
-		self.setCentralWidget(editArea)
+		self.editArea = EditArea()
+		self.setCentralWidget(self.editArea)
 		
 		# TODO: Toolbar
 		self.toolbar = QToolBar("Tools")
@@ -281,16 +301,22 @@ class MainWindow(QMainWindow):
 		self.labelPanel = QDockWidget("Labels Panel")
 		self.labelPanel.setFeatures(windowFeatures)
 		
+		self.layerList = LayerListWidget(self.editArea.layers)
+		self.layerList.onNewBitmapClicked.connect(self.addNewBitmapLayer)
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
-		self.layerPanel.setWidget(LayerListWidget())
+		self.layerPanel.setWidget(self.layerList)
+		self.editArea.onLayerAdded.connect(self.layerList.updateLayers)
 		
 		self.addToolBar(self.toolbar)
 		self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)
 		self.addDockWidget(Qt.RightDockWidgetArea, self.labelPanel)
 		self.addDockWidget(Qt.RightDockWidgetArea, self.layerPanel)
 		self.setStatusBar(QStatusBar())
-	
+		
+	def addNewBitmapLayer(self):
+		self.editArea.addLayer(LayerBitmap())
+		
 	def keyPressEvent(self, event: QKeyEvent):
 		if event.key() == Qt.Key_Escape:
 			self.close()
