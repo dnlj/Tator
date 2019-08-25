@@ -6,9 +6,10 @@ import numpy as np
 import skimage as ski
 
 from binder import *
+from LayerBitmap import LayerBitmap
 
 class ActionBrush():
-	def __init__(self, mask: np.ndarray):
+	def __init__(self):
 		self.binds = BindSystem()
 		
 		self.binds.addBind(Bind("draw",
@@ -32,11 +33,14 @@ class ActionBrush():
 		))
 		self.binds.addListener("resize", BindEvent.TRIGGER, self.triggerResize)
 		
-		self.mask = mask
 		self.brushRadius = 20
 		
 		self.oldPos = QPoint()
 		self.curPos = QPoint()
+		
+	def setLayer(self, layer: LayerBitmap):
+		# TODO: Check layer type
+		self.mask = layer.mask
 		
 	def pressDraw(self, inp: Input, val, inputs):
 		self.oldPos = val[1]

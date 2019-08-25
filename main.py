@@ -12,6 +12,7 @@ import numpy as np
 from binder import *
 from ActionBrush import ActionBrush
 from ActionFill import ActionFill
+from LayerBitmap import LayerBitmap
 
 # Flood fill
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
@@ -23,17 +24,12 @@ from ActionFill import ActionFill
 # TODO: cursor per tool
 # TODO: Tool shortcuts
 # TODO: Tool options menu
-# TODO: Switch visible tools depending on active layer type
+# TODO: Switch visible tools depending on.activeLayer.mask layer type
 
-################################################################################
-class LayerBitmap:
-	def __init__(self):
-		self.mask = None
-		self.label = "This is the layer label"
-		self.visible = True
 ################################################################################
 class EditArea(QWidget):
 	onLayerAdded = pyqtSignal()
+	activeLayer = None
 	
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
@@ -51,23 +47,29 @@ class EditArea(QWidget):
 		
 		# TODO: should layers be stored on the widget? seems out of place
 		self.layers = []
-		#self.layers.append(LayerBitmap())
-		#self.activeLayer = layers[0]
-		
-		self.mask = np.zeros((self.base.height(), self.base.width()), dtype=np.uint8)
 		
 		self.actions = {}
-		self.actions[ActionBrush] = ActionBrush(self.mask)
-		self.actions[ActionFill] = ActionFill(self.mask)
+		self.actions[ActionBrush] = ActionBrush()
+		self.actions[ActionFill] = ActionFill()
 		
 		self.activeAction = self.actions[ActionBrush]
 		
+	def setActiveLayer(self, layerIndex):
+		self.activeLayer = self.layers[layerIndex]
+		self.activeAction.setLayer(self.activeLayer)
+		
 	def addLayer(self, layer):
 		self.layers.append(layer)
+		self.setActiveLayer(len(self.layers) - 1)
 		self.onLayerAdded.emit()
 		
+	def addBitmapLayer(self):
+		self.addLayer(LayerBitmap(self.base.height(), self.base.width()))
+		
 	def setAction(self, action):
+		self.activeAction.setLayer(None)
 		self.activeAction = self.actions[action]
+		self.activeAction.setLayer(self.activeLayer)
 		
 	def resizeEvent(self, event: QResizeEvent):
 		self.scaledScale = min(self.width() / self.base.width(), self.height() / self.base.height())
@@ -105,10 +107,12 @@ class EditArea(QWidget):
 	def composeCanvas(self):
 		with QPainter(self.canvas) as painter:
 			painter.drawImage(0, 0, self.base)
-
-			maskToQt = QImage(self.mask.data, self.mask.shape[1], self.mask.shape[0], QImage.Format_Indexed8)
-			maskToQt.setColorTable([0] * 255 + [qRgba(255,0,0,127)])
-			painter.drawImage(0, 0, maskToQt)
+			
+			if self.activeLayer is not None:
+				mask = self.activeLayer.mask
+				maskToQt = QImage(mask.data, mask.shape[1], mask.shape[0], QImage.Format_Indexed8)
+				maskToQt.setColorTable([0] * 255 + [qRgba(255,0,0,127)])
+				painter.drawImage(0, 0, maskToQt)
 			
 		self.activeAction.drawHints(self.canvas, self.curPos)
 		
@@ -303,6 +307,7 @@ class MainWindow(QMainWindow):
 		
 		self.layerList = LayerListWidget(self.editArea.layers)
 		self.layerList.onNewBitmapClicked.connect(self.addNewBitmapLayer)
+		
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
 		self.layerPanel.setWidget(self.layerList)
@@ -315,7 +320,7 @@ class MainWindow(QMainWindow):
 		self.setStatusBar(QStatusBar())
 		
 	def addNewBitmapLayer(self):
-		self.editArea.addLayer(LayerBitmap())
+		self.editArea.addBitmapLayer()
 		
 	def keyPressEvent(self, event: QKeyEvent):
 		if event.key() == Qt.Key_Escape:
