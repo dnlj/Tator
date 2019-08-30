@@ -48,11 +48,7 @@ class EditArea(QWidget):
 		# TODO: should layers be stored on the widget? seems out of place
 		self.layers = []
 		
-		self.actions = {}
-		self.actions[ActionBrush] = ActionBrush()
-		self.actions[ActionFill] = ActionFill()
-		
-		self.activeAction = self.actions[ActionBrush]
+		self.activeAction = ActionBrush()
 		
 	def setActiveLayer(self, layerIndex):
 		self.activeLayer = self.layers[layerIndex]
@@ -67,8 +63,7 @@ class EditArea(QWidget):
 		self.addLayer(LayerBitmap(self.base.height(), self.base.width()))
 		
 	def setAction(self, action):
-		self.activeAction.setLayer(None)
-		self.activeAction = self.actions[action]
+		self.activeAction = action()
 		self.activeAction.setLayer(self.activeLayer)
 		
 	def resizeEvent(self, event: QResizeEvent):
@@ -167,6 +162,7 @@ class LayerView(QWidget):
 		pal.setColor(QPalette.Background, Qt.red)
 		self.setAutoFillBackground(True)
 		self.setPalette(pal)
+		
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton: # TODO: Change to bind system
 			# TODO: lookinto signals for this
@@ -292,8 +288,8 @@ class MainWindow(QMainWindow):
 		self.toolbar.addAction("Box")
 		self.toolbar.addAction("Polygon")
 		self.toolbar.addSeparator()
-		self.toolbar.addAction("Brush", lambda: editArea.setAction(ActionBrush))
-		self.toolbar.addAction("Fill", lambda: editArea.setAction(ActionFill))
+		self.toolbar.addAction("Brush", lambda: self.editArea.setAction(ActionBrush))
+		self.toolbar.addAction("Fill", lambda: self.editArea.setAction(ActionFill))
 		self.toolbar.addAction("Wand Select")
 		self.toolbar.addSeparator()
 		self.toolbar.addAction("Smart Select")
@@ -318,6 +314,8 @@ class MainWindow(QMainWindow):
 		self.addDockWidget(Qt.RightDockWidgetArea, self.labelPanel)
 		self.addDockWidget(Qt.RightDockWidgetArea, self.layerPanel)
 		self.setStatusBar(QStatusBar())
+		
+		self.addNewBitmapLayer()
 		
 	def addNewBitmapLayer(self):
 		self.editArea.addBitmapLayer()
