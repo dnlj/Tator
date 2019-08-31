@@ -2,7 +2,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-
+# TODO: Move
+class ComboBoxNoScroll(QComboBox):
+	def __init__(self, parent=None):
+		super().__init__(parent=parent)
+		self.setFocusPolicy(Qt.StrongFocus)
+		
+	def wheelEvent(self, event: QWheelEvent):
+		return self.parent().wheelEvent(event)
+		
 class LayerView(QWidget):
 	onClicked = pyqtSignal([QWidget])
 	
@@ -14,9 +22,23 @@ class LayerView(QWidget):
 		layout = QHBoxLayout()
 		self.setLayout(layout)
 		
-		layout.addWidget(QCheckBox()) # TODO: Custom eye icons?
+		visBox = QCheckBox() # TODO: Custom eye icons?
+		visBox.setCheckState(Qt.Checked if layer.visible else Qt.Unchecked)
+		#visBox.stateChanged.connect() # TODO: impl
+		layout.addWidget(visBox)
+		
 		# TODO: Layer Preview
-		layout.addWidget(QLabel(layer.label)) # TODO: Dropdown to select
+		
+		# TODO: implement functionality
+		dropdown = ComboBoxNoScroll() # TODO: how to populate?
+		dropdown.addItem("")
+		dropdown.addItem("label 1")
+		dropdown.addItem("label 2")
+		dropdown.addItem("label 3")
+		dropdown.addItem("label 4")
+		dropdown.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
+		layout.addWidget(dropdown)
+		
 		layout.addWidget(QLabel("[B]")) # TODO: Icon
 		layout.addWidget(QPushButton("-"))
 		
