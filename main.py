@@ -27,7 +27,7 @@ from LayerBitmap import LayerBitmap
 
 ################################################################################
 class EditArea(QWidget):
-	onLayerAdded = pyqtSignal()
+	onLayerAdded = pyqtSignal([int, LayerBitmap])
 	activeLayer = None
 	
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
@@ -49,14 +49,14 @@ class EditArea(QWidget):
 		
 		self.activeAction = ActionBrush()
 		
-	def setActiveLayer(self, layerIndex):
-		self.activeLayer = self.layers[layerIndex]
+	def setActiveLayer(self, layer: LayerBitmap):
+		self.activeLayer = layer
 		self.activeAction.setLayer(self.activeLayer)
 		
 	def addLayer(self, layer):
 		self.layers.append(layer)
-		self.setActiveLayer(len(self.layers) - 1)
-		self.onLayerAdded.emit()
+		self.setActiveLayer(layer)
+		self.onLayerAdded.emit(len(self.layers) - 1, layer)
 		
 	def addBitmapLayer(self):
 		self.addLayer(LayerBitmap(self.base.height(), self.base.width()))
@@ -143,6 +143,8 @@ class EditArea(QWidget):
 		
 ################################################################################
 class LayerView(QWidget):
+	onClicked = pyqtSignal([QWidget])
+	
 	def __init__(self, layer, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.layer = layer
@@ -153,7 +155,7 @@ class LayerView(QWidget):
 		
 		layout.addWidget(QCheckBox()) # TODO: Custom eye icons?
 		# TODO: Layer Preview
-		layout.addWidget(QLabel("This is the label")) # TODO: Dropdown to select
+		layout.addWidget(QLabel(layer.label)) # TODO: Dropdown to select
 		layout.addWidget(QLabel("[B]")) # TODO: Icon
 		layout.addWidget(QPushButton("-"))
 		
@@ -165,8 +167,7 @@ class LayerView(QWidget):
 		
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton: # TODO: Change to bind system
-			# TODO: lookinto signals for this
-			self.parent().setLayerSelection(self) # TODO: Look at https://doc.qt.io/qt-5/signalsandslots.html
+			self.onClicked.emit(self)
 			
 	def setSelected(self, value: bool):
 		pal = QPalette() # TODO: surely not the best way to handle this. Look into style sheets?
@@ -178,6 +179,8 @@ class LayerView(QWidget):
 		
 ################################################################################
 class LayerViewList(QWidget):
+	onSelectionChanged = pyqtSignal([LayerBitmap])
+	
 	def __init__(self, layers, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.selected = None
@@ -185,13 +188,12 @@ class LayerViewList(QWidget):
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 		self.layout = QVBoxLayout()
 		self.layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
+		self.layout.setDirection(QBoxLayout.BottomToTop)
 		self.setLayout(self.layout)
-		self.updateLayers()
 		
 	def updateLayers(self):
 		selectedLayer = self.selected and self.selected.layer or None
 		
-		# TODO: how do i delete a widget? This doesnt work
 		while True:
 			taken = self.layout.takeAt(0)
 			if taken is not None:
@@ -200,15 +202,29 @@ class LayerViewList(QWidget):
 				break
 		for layer in self.layers:
 			layerView = LayerView(layer)
+			layerView.onClicked.connect(self.layerViewClicked)
 			self.layout.addWidget(layerView)
 			if layer is selectedLayer:
 				self.setLayerSelection(layerView)
+				
+	def layerViewClicked(self, layerView: LayerView):
+		self.setLayerSelection(layerView)
 		
-	def setLayerSelection(self, layerView: LayerView):
+	def setLayerSelection(self, layer):
+		layerView = None
+		
+		if isinstance(layer, int):
+			layerView = self.layout.itemAt(layer).widget()
+		elif isinstance(layer, LayerView):
+			layerView = layer
+		else:
+			raise Exception("Unhandled type")
+			
 		if self.selected:
 			self.selected.setSelected(False)
 		self.selected = layerView
 		self.selected.setSelected(True)
+		self.onSelectionChanged.emit(layerView.layer)
 ################################################################################
 class LayerViewListScroll(QScrollArea):
 	def __init__(self, layers, parent=None):
@@ -222,6 +238,9 @@ class LayerViewListScroll(QScrollArea):
 		
 		self.layerViewList = LayerViewList(layers=layers)
 		self.setWidget(self.layerViewList)
+		
+	def setLayerSelection(self, idx: int):
+		self.layerViewList.setLayerSelection(idx)
 		
 	def sizeHint(self):
 		return self.layerViewList.sizeHint() + self.verticalScrollBar().sizeHint()
@@ -258,17 +277,17 @@ class LayerListWidget(QWidget):
 		self.listView = LayerViewListScroll(layers=layers)
 		self.toolbar = LayerListToolbar()
 		
-		#self.toolbar.newBitmapButton.clicked.connect(self.onNewBitmapClicked)
-		
 		self.onNewBitmapClicked = self.toolbar.newBitmapButton.clicked
+		self.onLayerSelectionChanged = self.listView.layerViewList.onSelectionChanged
 		
 		layout = QVBoxLayout()
 		layout.addWidget(self.listView)
 		layout.addWidget(self.toolbar)
 		self.setLayout(layout)
 	
-	def updateLayers(self):
+	def layerAdded(self, idx: int, layer: LayerBitmap):
 		self.listView.updateLayers()
+		self.listView.setLayerSelection(idx)
 ################################################################################
 class MainWindow(QMainWindow):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
@@ -302,12 +321,13 @@ class MainWindow(QMainWindow):
 		self.labelPanel.setFeatures(windowFeatures)
 		
 		self.layerList = LayerListWidget(self.editArea.layers)
-		self.layerList.onNewBitmapClicked.connect(self.addNewBitmapLayer)
+		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
+		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
 		
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
 		self.layerPanel.setWidget(self.layerList)
-		self.editArea.onLayerAdded.connect(self.layerList.updateLayers)
+		self.editArea.onLayerAdded.connect(self.layerList.layerAdded)
 		
 		self.addToolBar(self.toolbar)
 		self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)
@@ -315,9 +335,6 @@ class MainWindow(QMainWindow):
 		self.addDockWidget(Qt.RightDockWidgetArea, self.layerPanel)
 		self.setStatusBar(QStatusBar())
 		
-		self.addNewBitmapLayer()
-		
-	def addNewBitmapLayer(self):
 		self.editArea.addBitmapLayer()
 		
 	def keyPressEvent(self, event: QKeyEvent):
