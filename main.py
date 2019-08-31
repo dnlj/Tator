@@ -77,7 +77,10 @@ class EditArea(QWidget):
 		
 	def updateBindSystems(self, inp: Input, val: Any):
 		self.binds.update(inp, val)
-		self.activeAction.binds.update(inp, val)
+		
+		if self.activeLayer.visible:
+			self.activeAction.binds.update(inp, val)
+			
 		self.update()
 		
 	def mousePressEvent(self, event: QMouseEvent):
@@ -104,6 +107,7 @@ class EditArea(QWidget):
 			painter.drawImage(0, 0, self.base)
 			
 			for layer in self.layers:
+				if not layer.visible: continue
 				# TODO: always draw active layer on top, lower opacity of BG layers
 				mask = layer.mask
 				maskToQt = QImage(mask.data, mask.shape[1], mask.shape[0], QImage.Format_Indexed8)

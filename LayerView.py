@@ -24,7 +24,7 @@ class LayerView(QWidget):
 		
 		visBox = QCheckBox() # TODO: Custom eye icons?
 		visBox.setCheckState(Qt.Checked if layer.visible else Qt.Unchecked)
-		#visBox.stateChanged.connect() # TODO: impl
+		visBox.stateChanged.connect(self.onStateChanged) # TODO: impl
 		layout.addWidget(visBox)
 		
 		# TODO: Layer Preview
@@ -47,6 +47,9 @@ class LayerView(QWidget):
 		pal.setColor(QPalette.Background, Qt.red)
 		self.setAutoFillBackground(True)
 		self.setPalette(pal)
+	
+	def onStateChanged(self, state: Qt.CheckState):
+		self.layer.visible = bool(state) # TODO: how force EditArea to redraw
 		
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton: # TODO: Change to bind system
