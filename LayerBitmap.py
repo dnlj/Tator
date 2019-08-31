@@ -1,3 +1,4 @@
+import random
 import numpy as np
 
 class LayerBitmap:
@@ -5,4 +6,9 @@ class LayerBitmap:
 		self.mask = np.zeros((width, height), dtype=np.uint8)
 		self.label = "This is the layer label"
 		self.visible = True
+		
+		# TODO: Better color generation
+		# http://devmag.org.za/2012/07/29/how-to-choose-colours-procedurally-algorithms/
+		# https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
+		self.color = random.randint(0x88_000000, 0x88_FFFFFF) # AA_RRGGBB
 		

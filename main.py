@@ -14,7 +14,6 @@ from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 from LayerBitmap import LayerBitmap
 
-# Flood fill
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
 #	https://stackoverflow.com/questions/16705721/opencv-floodfill-with-mask
 # https://www.cc.gatech.edu/~aagrawal307/magic.pdf
@@ -103,10 +102,11 @@ class EditArea(QWidget):
 		with QPainter(self.canvas) as painter:
 			painter.drawImage(0, 0, self.base)
 			
-			if self.activeLayer is not None:
-				mask = self.activeLayer.mask
+			for layer in self.layers:
+				# TODO: always draw active layer on top, lower opacity of BG layers
+				mask = layer.mask
 				maskToQt = QImage(mask.data, mask.shape[1], mask.shape[0], QImage.Format_Indexed8)
-				maskToQt.setColorTable([0] * 255 + [qRgba(255,0,0,127)])
+				maskToQt.setColorTable([0] * 255 + [layer.color])
 				painter.drawImage(0, 0, maskToQt)
 			
 		self.activeAction.drawHints(self.canvas, self.curPos)
