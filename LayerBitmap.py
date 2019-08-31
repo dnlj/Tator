@@ -1,14 +1,25 @@
 import random
 import numpy as np
 
+from PyQt5.QtGui import QColor
+
+nextRand = random.random()
+goldenRatioConjugate = ((5 ** 0.5) - 1) / 2
+
+def randColor():
+	global nextRand
+	global goldenRatioConjugate
+	
+	color = QColor()
+	color.setHsvF(nextRand, 0.5, 1.0, 0.65)
+	nextRand += goldenRatioConjugate
+	nextRand %= 1
+	return color.rgba()
+
 class LayerBitmap:
 	def __init__(self, width: int, height: int):
 		self.mask = np.zeros((width, height), dtype=np.uint8)
 		self.label = "This is the layer label"
 		self.visible = True
-		
-		# TODO: Better color generation
-		# http://devmag.org.za/2012/07/29/how-to-choose-colours-procedurally-algorithms/
-		# https://martin.ankerl.com/2009/12/09/how-to-create-random-colors-programmatically/
-		self.color = random.randint(0x99_000000, 0x99_FFFFFF) # AA_RRGGBB
+		self.color = randColor()
 		
