@@ -25,6 +25,8 @@ from LayerListWidget import LayerListWidget
 # TODO: Tool shortcuts
 # TODO: Tool options menu
 # TODO: Switch visible tools depending on.activeLayer.mask layer type
+# TODO: Make 1-9+0 shortcuts for changing the active layers label
+# TODO: Warn if a layer is unlabeled
 
 ################################################################################
 class EditArea(QWidget):
@@ -160,6 +162,15 @@ class MainWindow(QMainWindow):
 		
 		windowFeatures = QDockWidget.DockWidgetMovable
 		
+		labels = [
+			"",
+			"Label A",
+			"Label B",
+			"Label C",
+			"Label D",
+			"Label E",
+		]
+		
 		self.setWindowTitle("Tator")
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
@@ -185,7 +196,7 @@ class MainWindow(QMainWindow):
 		self.labelPanel = QDockWidget("Labels Panel")
 		self.labelPanel.setFeatures(windowFeatures)
 		
-		self.layerList = LayerListWidget(self.editArea.layers)
+		self.layerList = LayerListWidget(self.editArea.layers, labels)
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
 		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))

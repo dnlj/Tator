@@ -15,7 +15,7 @@ class LayerView(QWidget):
 	onClicked = pyqtSignal([QWidget])
 	onDelete = pyqtSignal([])
 	
-	def __init__(self, layer, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, layer, labels, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.layer = layer
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
@@ -23,25 +23,33 @@ class LayerView(QWidget):
 		layout = QHBoxLayout()
 		self.setLayout(layout)
 		
+		# Visibility toggle checkbox
 		visBox = QCheckBox() # TODO: Custom eye icons?
 		visBox.setCheckState(Qt.Checked if layer.visible.value else Qt.Unchecked)
-		visBox.stateChanged.connect(self.onStateChanged) # TODO: impl
+		visBox.stateChanged.connect(self.onStateChanged)
 		layout.addWidget(visBox)
 		
 		# TODO: Layer Preview
 		
-		# TODO: implement functionality
-		dropdown = ComboBoxNoScroll() # TODO: how to populate?
-		dropdown.addItem("")
-		dropdown.addItem("label 1")
-		dropdown.addItem("label 2")
-		dropdown.addItem("label 3")
-		dropdown.addItem("label 4")
+		# Layer label dropdown
+		dropdown = ComboBoxNoScroll()
+		try:
+			labelIdx = labels.index(layer.label.value)
+		except ValueError:
+			labels.append(layer.label.value)
+			labelIdx = len(labels) - 1
+		for label in labels:
+			dropdown.addItem(label)
 		dropdown.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
+		dropdown.setCurrentIndex(labelIdx)
+		def onDropdownChanged(label): layer.label.value = label
+		dropdown.currentTextChanged.connect(onDropdownChanged)
 		layout.addWidget(dropdown)
 		
+		# Layer type icon
 		layout.addWidget(QLabel("[B]")) # TODO: Icon
 		
+		# Delete layer button
 		self.deleteButton = QPushButton("-")
 		self.deleteButton.clicked.connect(lambda: self.onDelete.emit())
 		layout.addWidget(self.deleteButton)

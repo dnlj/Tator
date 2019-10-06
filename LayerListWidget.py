@@ -7,10 +7,10 @@ from LayerViewListScroll import LayerViewListScroll
 from LayerListToolbar import LayerListToolbar
 
 class LayerListWidget(QWidget):
-	def __init__(self, layers, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, layers, labels, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		
-		self.listView = LayerViewListScroll(layers=layers)
+		self.listView = LayerViewListScroll(layers=layers, labels=labels)
 		self.toolbar = LayerListToolbar()
 		
 		self.onNewBitmapClicked = self.toolbar.newBitmapButton.clicked

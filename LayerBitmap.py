@@ -21,7 +21,7 @@ def randColor():
 class LayerBitmap:
 	def __init__(self, width: int, height: int):
 		self.mask = np.zeros((width, height), dtype=np.uint8)
-		self.label = "This is the layer label"
+		self.label = Listenable("") # TODO: change to using indexes into the "global" list
 		self.visible = Listenable(True)
-		self.color = randColor()
+		self.color = randColor() # TODO: change to use color associated with global label list
 		
