@@ -15,6 +15,7 @@ class LayerListWidget(QWidget):
 		
 		self.onNewBitmapClicked = self.toolbar.newBitmapButton.clicked
 		self.onLayerSelectionChanged = self.listView.layerViewList.onSelectionChanged
+		self.onDeleteLayer = self.listView.layerViewList.onDeleteLayer
 		
 		layout = QVBoxLayout()
 		layout.addWidget(self.listView)

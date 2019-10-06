@@ -23,7 +23,7 @@ class LayerView(QWidget):
 		self.setLayout(layout)
 		
 		visBox = QCheckBox() # TODO: Custom eye icons?
-		visBox.setCheckState(Qt.Checked if layer.visible else Qt.Unchecked)
+		visBox.setCheckState(Qt.Checked if layer.visible.value else Qt.Unchecked)
 		visBox.stateChanged.connect(self.onStateChanged) # TODO: impl
 		layout.addWidget(visBox)
 		
@@ -40,7 +40,10 @@ class LayerView(QWidget):
 		layout.addWidget(dropdown)
 		
 		layout.addWidget(QLabel("[B]")) # TODO: Icon
-		layout.addWidget(QPushButton("-"))
+		
+		self.deleteButton = QPushButton("-")
+		self.onDelete = self.deleteButton.clicked
+		layout.addWidget(self.deleteButton)
 		
 		# TODO: override paint? call super().paint ?
 		pal = QPalette()
@@ -49,7 +52,7 @@ class LayerView(QWidget):
 		self.setPalette(pal)
 	
 	def onStateChanged(self, state: Qt.CheckState):
-		self.layer.visible = bool(state) # TODO: how force EditArea to redraw
+		self.layer.visible.value = bool(state) # TODO: how force EditArea to redraw
 		
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton: # TODO: Change to bind system

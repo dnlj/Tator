@@ -56,6 +56,7 @@ class EditArea(QWidget):
 		
 	def addLayer(self, layer):
 		self.layers.append(layer)
+		layer.visible.addListener(lambda new, old: self.update())
 		self.setActiveLayer(layer)
 		self.onLayerAdded.emit(len(self.layers) - 1, layer)
 		
@@ -78,7 +79,7 @@ class EditArea(QWidget):
 	def updateBindSystems(self, inp: Input, val: Any):
 		self.binds.update(inp, val)
 		
-		if self.activeLayer.visible:
+		if self.activeLayer.visible.value:
 			self.activeAction.binds.update(inp, val)
 			
 		self.update()
@@ -107,7 +108,7 @@ class EditArea(QWidget):
 			painter.drawImage(0, 0, self.base)
 			
 			for layer in self.layers:
-				if not layer.visible: continue
+				if not layer.visible.value: continue
 				# TODO: always draw active layer on top, lower opacity of BG layers
 				mask = layer.mask
 				maskToQt = QImage(mask.data, mask.shape[1], mask.shape[0], QImage.Format_Indexed8)
@@ -181,6 +182,7 @@ class MainWindow(QMainWindow):
 		self.layerList = LayerListWidget(self.editArea.layers)
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
+		self.layerList.onDeleteLayer.connect(lambda layer: print(layer))
 		
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)

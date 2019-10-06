@@ -7,6 +7,7 @@ from LayerView import LayerView
 
 class LayerViewList(QWidget):
 	onSelectionChanged = pyqtSignal([LayerBitmap])
+	onDeleteLayer = pyqtSignal([LayerBitmap])
 	
 	def __init__(self, layers, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
@@ -30,6 +31,7 @@ class LayerViewList(QWidget):
 		for layer in self.layers:
 			layerView = LayerView(layer)
 			layerView.onClicked.connect(self.layerViewClicked)
+			layerView.onDelete.connect(lambda: self.onDeleteLayer.signal(layer)) # TODO: this is wrong
 			self.layout.addWidget(layerView)
 			if layer is selectedLayer:
 				self.setLayerSelection(layerView)
