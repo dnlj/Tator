@@ -13,6 +13,7 @@ class ComboBoxNoScroll(QComboBox):
 		
 class LayerView(QWidget):
 	onClicked = pyqtSignal([QWidget])
+	onDelete = pyqtSignal([])
 	
 	def __init__(self, layer, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
@@ -42,7 +43,7 @@ class LayerView(QWidget):
 		layout.addWidget(QLabel("[B]")) # TODO: Icon
 		
 		self.deleteButton = QPushButton("-")
-		self.onDelete = self.deleteButton.clicked
+		self.deleteButton.clicked.connect(lambda: self.onDelete.emit())
 		layout.addWidget(self.deleteButton)
 		
 		# TODO: override paint? call super().paint ?

@@ -29,6 +29,7 @@ from LayerListWidget import LayerListWidget
 ################################################################################
 class EditArea(QWidget):
 	onLayerAdded = pyqtSignal([int, LayerBitmap])
+	onLayerDeleted = pyqtSignal([LayerBitmap])
 	activeLayer = None
 	
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
@@ -63,6 +64,11 @@ class EditArea(QWidget):
 	def addBitmapLayer(self):
 		self.addLayer(LayerBitmap(self.base.height(), self.base.width()))
 		
+	def deleteLayer(self, layer):
+		self.layers.remove(layer)
+		self.onLayerDeleted.emit(layer)
+		self.update()
+		
 	def setAction(self, action):
 		self.activeAction = action()
 		self.activeAction.setLayer(self.activeLayer)
@@ -79,7 +85,7 @@ class EditArea(QWidget):
 	def updateBindSystems(self, inp: Input, val: Any):
 		self.binds.update(inp, val)
 		
-		if self.activeLayer.visible.value:
+		if self.activeLayer and self.activeLayer.visible.value:
 			self.activeAction.binds.update(inp, val)
 			
 		self.update()
@@ -182,12 +188,13 @@ class MainWindow(QMainWindow):
 		self.layerList = LayerListWidget(self.editArea.layers)
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
-		self.layerList.onDeleteLayer.connect(lambda layer: print(layer))
+		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))
 		
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
 		self.layerPanel.setWidget(self.layerList)
 		self.editArea.onLayerAdded.connect(self.layerList.layerAdded)
+		self.editArea.onLayerDeleted.connect(self.layerList.layerDeleted)
 		
 		self.addToolBar(self.toolbar)
 		self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)

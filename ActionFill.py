@@ -25,7 +25,7 @@ class ActionFill():
 		
 	def setLayer(self, layer: LayerBitmap):
 		# TODO: Check layer type
-		self.mask = layer.mask
+		self.mask = layer.mask if layer else None
 			
 	def pressFill(self, inp: Input, val, inputs):
 		skis.flood_fill(self.mask, (val[1].y(), val[1].x()), 255, inplace=True)

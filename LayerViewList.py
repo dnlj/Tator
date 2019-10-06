@@ -6,7 +6,7 @@ from LayerBitmap import LayerBitmap
 from LayerView import LayerView
 
 class LayerViewList(QWidget):
-	onSelectionChanged = pyqtSignal([LayerBitmap])
+	onSelectionChanged = pyqtSignal([object])
 	onDeleteLayer = pyqtSignal([LayerBitmap])
 	
 	def __init__(self, layers, parent=None, flags=Qt.WindowFlags()):
@@ -21,6 +21,7 @@ class LayerViewList(QWidget):
 		
 	def updateLayers(self):
 		selectedLayer = self.selected and self.selected.layer or None
+		layerSelected = False
 		
 		while True:
 			taken = self.layout.takeAt(0)
@@ -31,10 +32,13 @@ class LayerViewList(QWidget):
 		for layer in self.layers:
 			layerView = LayerView(layer)
 			layerView.onClicked.connect(self.layerViewClicked)
-			layerView.onDelete.connect(lambda: self.onDeleteLayer.signal(layer)) # TODO: this is wrong
+			layerView.onDelete.connect(lambda layer=layer: self.onDeleteLayer.emit(layer)) # I love this language.
 			self.layout.addWidget(layerView)
 			if layer is selectedLayer:
+				layerSelected = True
 				self.setLayerSelection(layerView)
+		if not layerSelected:
+			self.setLayerSelection(None)
 				
 	def layerViewClicked(self, layerView: LayerView):
 		self.setLayerSelection(layerView)
@@ -46,6 +50,10 @@ class LayerViewList(QWidget):
 			layerView = self.layout.itemAt(layer).widget()
 		elif isinstance(layer, LayerView):
 			layerView = layer
+		elif layer is None:
+			self.selected = None
+			self.onSelectionChanged.emit(None)
+			return
 		else:
 			raise Exception("Unhandled type")
 			

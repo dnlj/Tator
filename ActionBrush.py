@@ -40,7 +40,7 @@ class ActionBrush():
 		
 	def setLayer(self, layer: LayerBitmap):
 		# TODO: Check layer type
-		self.mask = layer.mask
+		self.mask = layer.mask if layer else None
 		
 	def pressDraw(self, inp: Input, val, inputs):
 		self.oldPos = val[1]
