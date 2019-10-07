@@ -66,8 +66,11 @@ class EditArea(QWidget):
 		# TODO: should layers be stored on the widget? seems out of place
 		self.layers = []
 		
-		# TODO: Maintain list of actions so settings dont reset when switching (such as size on ActionBrush)
-		self.activeAction = ActionBrush()
+		self.actions = {}
+		
+		for a, d in actions.items():
+			self.actions[a] = a()
+		self.activeAction = self.actions[ActionBrush]
 		
 	def setActiveLayer(self, layer: LayerBitmap):
 		self.activeLayer = layer
@@ -88,7 +91,7 @@ class EditArea(QWidget):
 		self.update()
 		
 	def setAction(self, action):
-		self.activeAction = action()
+		self.activeAction = self.actions[action]
 		self.activeAction.setLayer(self.activeLayer)
 		
 	def resizeEvent(self, event: QResizeEvent):
