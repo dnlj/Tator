@@ -33,17 +33,12 @@ class LayerView(QWidget):
 		
 		# Layer label dropdown
 		dropdown = ComboBoxNoScroll()
-		try:
-			labelIdx = labels.index(layer.label.value)
-		except ValueError:
-			labels.append(layer.label.value)
-			labelIdx = len(labels) - 1
-		for label in labels:
-			dropdown.addItem(label)
+		for i, label in enumerate(labels):
+			dropdown.addItem(label, i)
 		dropdown.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
-		dropdown.setCurrentIndex(labelIdx)
-		def onDropdownChanged(label): layer.label.value = label
-		dropdown.currentTextChanged.connect(onDropdownChanged)
+		dropdown.setCurrentIndex(layer.label.value)
+		def onDropdownChanged(idx): layer.label.value = idx
+		dropdown.currentIndexChanged.connect(onDropdownChanged)
 		layout.addWidget(dropdown)
 		
 		# Layer type icon
