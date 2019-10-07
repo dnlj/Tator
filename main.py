@@ -28,16 +28,31 @@ from LayerListWidget import LayerListWidget
 # TODO: Make 1-9+0 shortcuts for changing the active layers label
 # TODO: Warn if a layer is unlabeled
 
+
 ################################################################################
 class EditArea(QWidget):
 	onLayerAdded = pyqtSignal([int, LayerBitmap])
 	onLayerDeleted = pyqtSignal([LayerBitmap])
 	activeLayer = None
 	
-	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, actions, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.binds = BindSystem()
 		
+		self.binds.addBind(Bind("close",
+			inputs=[(Input(InputType.KEYBOARD, Qt.Key_Escape), lambda e : e[0])]
+		))
+		self.binds.addListener("close", BindEvent.PRESS, lambda i, v, ii: self.parent().close())
+		
+		# TODO: Should these binds be the MainWindow?
+		for a, d in actions.items():
+			self.binds.addBind(Bind(d["name"],
+				inputs=[(Input(InputType.KEYBOARD, d["key"]), lambda e : e[0])]
+			))
+			def callback(input, value, inputs, a=a): self.setAction(a)
+			self.binds.addListener(d["name"], BindEvent.PRESS, callback)
+		
+		self.setFocusPolicy(Qt.WheelFocus)
 		self.setMouseTracking(True)
 		self.curPos = QPoint()
 		self.oldPos = QPoint()
@@ -51,6 +66,7 @@ class EditArea(QWidget):
 		# TODO: should layers be stored on the widget? seems out of place
 		self.layers = []
 		
+		# TODO: Maintain list of actions so settings dont reset when switching (such as size on ActionBrush)
 		self.activeAction = ActionBrush()
 		
 	def setActiveLayer(self, layer: LayerBitmap):
@@ -100,6 +116,12 @@ class EditArea(QWidget):
 			
 	def wheelEvent(self, event: QWheelEvent):
 		self.updateBindSystems(Input(InputType.MOUSE_WHEEL), event.angleDelta().y())
+	
+	def keyPressEvent(self, event: QKeyEvent):
+		self.updateBindSystems(Input(InputType.KEYBOARD, event.key()), (True,))
+		
+	def keyReleaseEvent(self, event: QKeyEvent):
+		self.updateBindSystems(Input(InputType.KEYBOARD, event.key()), (False,))
 		
 	def mouseMoveEvent(self, event: QMouseEvent):
 		newPos = self.mousePosToCanvasPos(event.pos())
@@ -162,6 +184,17 @@ class MainWindow(QMainWindow):
 		
 		windowFeatures = QDockWidget.DockWidgetMovable
 		
+		actions = {
+			ActionBrush: {
+				"name": "Brush",
+				"key": Qt.Key_B,
+			},
+			ActionFill: {
+				"name": "Fill",
+				"key": Qt.Key_F,
+			},
+		}
+		
 		labels = [
 			"",
 			"Label A",
@@ -175,7 +208,7 @@ class MainWindow(QMainWindow):
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
 		
-		self.editArea = EditArea()
+		self.editArea = EditArea(actions)
 		self.setCentralWidget(self.editArea)
 		
 		# TODO: Toolbar
@@ -183,8 +216,10 @@ class MainWindow(QMainWindow):
 		self.toolbar.addAction("Box")
 		self.toolbar.addAction("Polygon")
 		self.toolbar.addSeparator()
-		self.toolbar.addAction("Brush", lambda: self.editArea.setAction(ActionBrush))
-		self.toolbar.addAction("Fill", lambda: self.editArea.setAction(ActionFill))
+		
+		for a, d in actions.items():
+			def callback(a=a): self.editArea.setAction(a)
+			self.toolbar.addAction(d["name"], callback)
 		self.toolbar.addAction("Wand Select")
 		self.toolbar.addSeparator()
 		self.toolbar.addAction("Smart Select")
@@ -214,10 +249,6 @@ class MainWindow(QMainWindow):
 		self.setStatusBar(QStatusBar())
 		
 		self.editArea.addBitmapLayer()
-		
-	def keyPressEvent(self, event: QKeyEvent):
-		if event.key() == Qt.Key_Escape:
-			self.close()
 
 ################################################################################
 if __name__ == "__main__":
