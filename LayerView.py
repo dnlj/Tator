@@ -15,7 +15,7 @@ class LayerView(QWidget):
 	onClicked = pyqtSignal([QWidget])
 	onDelete = pyqtSignal([])
 	
-	def __init__(self, layer, labels, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, layer, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.layer = layer
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
@@ -33,11 +33,11 @@ class LayerView(QWidget):
 		
 		# Layer label dropdown
 		dropdown = ComboBoxNoScroll()
-		for i, label in enumerate(labels):
-			dropdown.addItem(label, i)
+		for cat in cats:
+			dropdown.addItem(cat["name"], cat["id"])
 		dropdown.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
 		dropdown.setCurrentIndex(layer.label.value)
-		def onDropdownChanged(idx): layer.label.value = idx
+		def onDropdownChanged(idx): layer.label.value = dropdown.itemData(idx)
 		dropdown.currentIndexChanged.connect(onDropdownChanged)
 		layout.addWidget(dropdown)
 		

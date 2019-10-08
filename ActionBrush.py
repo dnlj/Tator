@@ -63,7 +63,8 @@ class ActionBrush():
 		self.apply(0)
 		
 	def triggerResize(self, inp: Input, val, inputs):
-		self.brushRadius = int(max(1, self.brushRadius + val/24))
+		print(val)
+		self.brushRadius = int(max(1, self.brushRadius + val/40))
 		
 	def apply(self, value: np.uint8):
 		begin = np.array([self.curPos.y(), self.curPos.x()])

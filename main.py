@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
 import numpy as np
+import json
 
 from binder import *
 from ActionBrush import ActionBrush
@@ -58,7 +59,7 @@ class EditArea(QWidget):
 		self.oldPos = QPoint()
 		self.points = []
 		
-		self.base = QImage("test3.jpg")
+		self.base = QImage("data/test3.jpg")
 		
 		self.canvas = QImage(self.base.width(), self.base.height(), QImage.Format_RGBA8888)
 		self.canvas.fill(Qt.transparent)
@@ -207,6 +208,21 @@ class MainWindow(QMainWindow):
 			"Label E",
 		]
 		
+		categories = None
+		
+		with open("project.json") as pfile:
+			project = json.load(pfile)
+		
+		# Verify category ids
+		categories = project["categories"]
+		for i in range(len(categories)):
+			if i != categories[i]["id"]: raise RuntimeError("Incorrect category id")
+		
+		# Verify annotation ids
+		annotations = project["annotations"]
+		for i in range(len(annotations)):
+			if i != annotations[i]["id"]: raise RuntimeError("Incorrect annotation id")
+			
 		self.setWindowTitle("Tator")
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
@@ -231,10 +247,10 @@ class MainWindow(QMainWindow):
 		self.imagePanel = QDockWidget("Images Panel")
 		self.imagePanel.setFeatures(windowFeatures)
 		
-		self.labelPanel = QDockWidget("Labels Panel")
+		self.labelPanel = QDockWidget("Categories Panel")
 		self.labelPanel.setFeatures(windowFeatures)
 		
-		self.layerList = LayerListWidget(self.editArea.layers, labels)
+		self.layerList = LayerListWidget(self.editArea.layers, categories)
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
 		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))

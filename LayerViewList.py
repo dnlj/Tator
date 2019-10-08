@@ -9,11 +9,11 @@ class LayerViewList(QWidget):
 	onSelectionChanged = pyqtSignal([object])
 	onDeleteLayer = pyqtSignal([LayerBitmap])
 	
-	def __init__(self, layers, labels, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, layers, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.selected = None
 		self.layers = layers
-		self.labels = labels
+		self.cats = cats
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 		self.layout = QVBoxLayout()
 		self.layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
@@ -31,7 +31,7 @@ class LayerViewList(QWidget):
 			else:
 				break
 		for layer in self.layers:
-			layerView = LayerView(layer, self.labels)
+			layerView = LayerView(layer, self.cats)
 			layerView.onClicked.connect(self.layerViewClicked)
 			layerView.onDelete.connect(lambda layer=layer: self.onDeleteLayer.emit(layer)) # I love this language.
 			self.layout.addWidget(layerView)

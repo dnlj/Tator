@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 from LayerViewList import LayerViewList
 
 class LayerViewListScroll(QScrollArea):
-	def __init__(self, layers, labels, parent=None):
+	def __init__(self, layers, cats, parent=None):
 		super().__init__(parent=parent)
 		
 		self.setFrameShape(QFrame.NoFrame)
@@ -14,7 +14,7 @@ class LayerViewListScroll(QScrollArea):
 		self.setWidgetResizable(True)
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 		
-		self.layerViewList = LayerViewList(layers=layers, labels=labels)
+		self.layerViewList = LayerViewList(layers=layers, cats=cats)
 		self.setWidget(self.layerViewList)
 		
 	def setLayerSelection(self, idx: int):
