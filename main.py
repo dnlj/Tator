@@ -15,6 +15,7 @@ from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 from LayerBitmap import LayerBitmap
 from LayerListWidget import LayerListWidget
+from ThumbnailList import ThumbnailList
 
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
 #	https://stackoverflow.com/questions/16705721/opencv-floodfill-with-mask
@@ -141,9 +142,11 @@ class EditArea(QWidget):
 		with QPainter(self.canvas) as painter:
 			painter.drawImage(0, 0, self.base)
 			
+			# TODO: Cache the composite of the layers. So we dont lag when not editing with large number of layers.
 			for layer in self.layers:
 				if not layer.visible.value: continue
 				# TODO: always draw active layer on top, lower opacity of BG layers
+				# TODO: See if composing in numpy then converting is faster than converting to QImage and composing
 				mask = layer.mask
 				maskToQt = QImage(mask.data, mask.shape[1], mask.shape[0], QImage.Format_Indexed8)
 				maskToQt.setColorTable([0] * 255 + [layer.color])
@@ -213,11 +216,17 @@ class MainWindow(QMainWindow):
 		with open("project.json") as pfile:
 			project = json.load(pfile)
 		
+		# TODO: We should be able to delete things from the json file and have it just work. Will need to change this.
 		# Verify category ids
 		categories = project["categories"]
 		for i in range(len(categories)):
 			if i != categories[i]["id"]: raise RuntimeError("Incorrect category id")
 		
+		# Verify image ids
+		images = project["images"]
+		for i in range(len(images)):
+			if i != images[i]["id"]: raise RuntimeError("Incorrect image id")
+			
 		# Verify annotation ids
 		annotations = project["annotations"]
 		for i in range(len(annotations)):
@@ -244,8 +253,10 @@ class MainWindow(QMainWindow):
 		self.toolbar.addAction("Smart Select")
 		
 		# TODO: Look into flow layout
+		self.thumbList = ThumbnailList()
 		self.imagePanel = QDockWidget("Images Panel")
 		self.imagePanel.setFeatures(windowFeatures)
+		self.imagePanel.setWidget(self.thumbList)
 		
 		self.labelPanel = QDockWidget("Categories Panel")
 		self.labelPanel.setFeatures(windowFeatures)

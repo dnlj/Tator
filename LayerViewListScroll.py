@@ -9,7 +9,6 @@ class LayerViewListScroll(QScrollArea):
 		super().__init__(parent=parent)
 		
 		self.setFrameShape(QFrame.NoFrame)
-		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 		self.setWidgetResizable(True)
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
