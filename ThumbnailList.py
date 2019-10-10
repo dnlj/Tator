@@ -22,9 +22,17 @@ class ThumbnailDelegate(QStyledItemDelegate):
 		#return super().paint(painter, option, index)
 		# TODO: dont forget to draw option.state
 		# TODO: look into QStyle to draw selection
-		# TODO: need to work out aspect ratio math again...
 		pixm = index.data(Qt.DecorationRole)
-		painter.drawPixmap(option.rect, pixm, pixm.rect())
+		p = pixm.rect()
+		o = option.rect
+		
+		scale = min(o.width() / p.width(), o.height() / p.height())
+		size = p.size() * scale
+		offset = (o.size() - size)/2
+		offset = QPoint(offset.width(), offset.height())
+		new = QRect(o.topLeft() + offset, size)
+		# TODO: doesn't upscale past original resolution
+		painter.drawPixmap(new, pixm, pixm.rect())
 
 
 # https://www.qtcentre.org/threads/33751-QListView-of-images
@@ -39,7 +47,7 @@ class ThumbnailList(QListView):
 		self.setWrapping(False)
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 		self.setMovement(QListView.Static)
-		self.setGridSize(QSize(192, 192))
+		self.setGridSize(QSize(128, 128))
 		self.setItemDelegate(ThumbnailDelegate())
 		self.setModel(ThumbnailModel())
 		
