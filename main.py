@@ -15,7 +15,6 @@ from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 from LayerBitmap import LayerBitmap
 from LayerListWidget import LayerListWidget
-from ThumbnailList import ThumbnailList
 
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
 #	https://stackoverflow.com/questions/16705721/opencv-floodfill-with-mask
@@ -253,10 +252,9 @@ class MainWindow(QMainWindow):
 		self.toolbar.addAction("Smart Select")
 		
 		# TODO: Look into flow layout
-		self.thumbList = ThumbnailList()
-		self.imagePanel = QDockWidget("Images Panel")
+		self.imagePanel = QDockWidget("")
 		self.imagePanel.setFeatures(windowFeatures)
-		self.imagePanel.setWidget(self.thumbList)
+		#self.imagePanel.setWidget(self.thumbList)
 		
 		self.labelPanel = QDockWidget("Categories Panel")
 		self.labelPanel.setFeatures(windowFeatures)
