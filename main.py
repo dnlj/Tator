@@ -15,10 +15,16 @@ from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 from LayerBitmap import LayerBitmap
 from LayerListWidget import LayerListWidget
+from ThumbnailPreview import ThumbnailPreview
 
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
 #	https://stackoverflow.com/questions/16705721/opencv-floodfill-with-mask
 # https://www.cc.gatech.edu/~aagrawal307/magic.pdf
+
+# TODO: look into watershed:
+#	https://en.wikipedia.org/wiki/Watershed_(image_processing)
+#	https://scikit-image.org/docs/dev/auto_examples/segmentation/plot_watershed.html
+# 	https://docs.opencv.org/master/d3/db4/tutorial_py_watershed.html
 
 # TODO: change events to send np arrays instead of QPoints
 # TODO: Undo/Redo
@@ -28,6 +34,7 @@ from LayerListWidget import LayerListWidget
 # TODO: Switch visible tools depending on.activeLayer.mask layer type
 # TODO: Make 1-9+0 shortcuts for changing the active layers label
 # TODO: Warn if a layer is unlabeled
+# TODO: right click open dropdown to select layer type?
 
 
 ################################################################################
@@ -254,7 +261,11 @@ class MainWindow(QMainWindow):
 		# TODO: Look into flow layout
 		self.imagePanel = QDockWidget("")
 		self.imagePanel.setFeatures(windowFeatures)
+		self.imagePanel.setWidget(ThumbnailPreview())
 		#self.imagePanel.setWidget(self.thumbList)
+		# TODO: Image list with search bar (icon indicating if they have annotations)
+		# TODO: preview of 5 imgs. prev 2, current and next 2
+		# TODO: next/prev button
 		
 		self.labelPanel = QDockWidget("Categories Panel")
 		self.labelPanel.setFeatures(windowFeatures)
