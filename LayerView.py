@@ -37,6 +37,7 @@ class LayerView(QWidget):
 			dropdown.addItem(cat["name"], cat["id"])
 		dropdown.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
 		dropdown.setCurrentIndex(layer.label.value)
+		# TODO: we need to listen for this somewhere to update the layers (bgcolor)
 		def onDropdownChanged(idx): layer.label.value = dropdown.itemData(idx)
 		dropdown.currentIndexChanged.connect(onDropdownChanged)
 		layout.addWidget(dropdown)
@@ -49,12 +50,30 @@ class LayerView(QWidget):
 		self.deleteButton.clicked.connect(lambda: self.onDelete.emit())
 		layout.addWidget(self.deleteButton)
 		
-		# TODO: override paint? call super().paint ?
-		pal = QPalette()
-		pal.setColor(QPalette.Background, Qt.red)
-		self.setAutoFillBackground(True)
-		self.setPalette(pal)
-	
+		# Setup style
+		self.setProperty("is-selected", False)
+		self.setStyleSheet( # TODO: move stylesheets into files?
+			f"""
+			LayerView {{
+				background: {QColor(self.layer.color).name()};
+			}}
+			
+			LayerView:hover {{
+				border: 0.5em solid rgba(0,0,0, 0.5);
+			}}
+			
+			LayerView[is-selected=true] {{
+				border: 0.5em solid red;
+			}}
+			""")
+		
+	# TODO: Needed for stylesheet support? what does this do exactly?
+	def paintEvent(self, event: QPaintEvent):
+		opt = QStyleOption()
+		opt.initFrom(self)
+		painter = QPainter(self)
+		self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
+		
 	def onStateChanged(self, state: Qt.CheckState):
 		self.layer.visible.value = bool(state) # TODO: how force EditArea to redraw
 		
@@ -63,10 +82,7 @@ class LayerView(QWidget):
 			self.onClicked.emit(self)
 			
 	def setSelected(self, value: bool):
-		pal = QPalette() # TODO: surely not the best way to handle this. Look into style sheets?
-		if value:
-			pal.setColor(QPalette.Background, Qt.blue)
-		else:
-			pal.setColor(QPalette.Background, Qt.red)
-		self.setPalette(pal)
+		self.setProperty("is-selected", value)
+		self.style().unpolish(self)
+		self.style().polish(self)
 		
