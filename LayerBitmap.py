@@ -3,7 +3,7 @@ import numpy as np
 
 from PyQt5.QtGui import QColor
 
-from Listenable import Listenable
+from ListenableValue import ListenableValue
 
 nextRand = random.random()
 goldenRatioConjugate = ((5 ** 0.5) - 1) / 2
@@ -21,6 +21,6 @@ def randColor():
 class LayerBitmap:
 	def __init__(self, width: int, height: int):
 		self.mask = np.zeros((width, height), dtype=np.uint8)
-		self.label = Listenable(0)
-		self.visible = Listenable(True)
+		self.label = ListenableValue(0)
+		self.visible = ListenableValue(True)
 		

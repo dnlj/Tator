@@ -16,6 +16,7 @@ from ActionFill import ActionFill
 from LayerBitmap import LayerBitmap
 from LayerListWidget import LayerListWidget
 from ThumbnailPreview import ThumbnailPreview
+from Listenable import Listenable
 
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
 #	https://stackoverflow.com/questions/16705721/opencv-floodfill-with-mask
@@ -39,11 +40,11 @@ from ThumbnailPreview import ThumbnailPreview
 
 ################################################################################
 class EditArea(QWidget):
-	onLayersUpdated = pyqtSignal([int, LayerBitmap])
-	activeLayer = None
-	
 	def __init__(self, actions, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
+		self.onLayersUpdated = Listenable()
+		self.activeLayer = None
+		
 		self.cats = cats
 		self.binds = BindSystem()
 		
@@ -79,6 +80,11 @@ class EditArea(QWidget):
 		for a, d in actions.items():
 			self.actions[a] = a()
 		self.activeAction = self.actions[ActionBrush]
+	
+	def layersUpdate(self):
+		# TODO: is there any reason to be passing the active layer here? Doesnt our LayerViewList widget track this?
+		# TODO: i think the original idea was so we can select a new layer when it is created
+		self.onLayersUpdated.notify(self.layers.index(self.activeLayer) if self.activeLayer is not None else None)
 		
 	def setActiveLayer(self, layer: LayerBitmap):
 		self.activeLayer = layer
@@ -88,22 +94,21 @@ class EditArea(QWidget):
 	def addLayer(self, layer):
 		self.layers.append(layer)
 		def fieldChangedListener(new, old):
-			# TODO: This is wrong. This should be the index of the currently selected layer.
-			self.onLayersUpdated.emit(len(self.layers) - 1, layer)
+			self.layersUpdate()
 			self.update()
 		layer.label.addListener(fieldChangedListener)
 		layer.visible.addListener(fieldChangedListener)
 		self.setActiveLayer(layer)
-		# TODO: This is wrong. This should be the index of the currently selected layer.
-		self.onLayersUpdated.emit(len(self.layers) - 1, layer)
+		self.layersUpdate()
 		
 	def addBitmapLayer(self):
 		self.addLayer(LayerBitmap(self.base.height(), self.base.width()))
 		
 	def deleteLayer(self, layer):
 		self.layers.remove(layer)
-		# TODO: This is wrong. This should be the index of the currently selected layer.
-		self.onLayersUpdated.emit(len(self.layers) - 1, layer)
+		if layer == self.activeLayer:
+			self.setActiveLayer(None)
+		self.layersUpdate()
 		self.update()
 		
 	def setAction(self, action):
@@ -299,7 +304,7 @@ class MainWindow(QMainWindow):
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
 		self.layerPanel.setWidget(self.layerList)
-		self.editArea.onLayersUpdated.connect(self.layerList.layersUpdated)
+		self.editArea.onLayersUpdated.addListener(self.layerList.layersUpdated)
 		
 		self.addToolBar(self.toolbar)
 		self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)

@@ -52,18 +52,19 @@ class LayerView(QWidget):
 		
 		# Setup style
 		self.setProperty("is-selected", False)
+		bgColor = QColor(cats[layer.label.value]["color"])
 		self.setStyleSheet( # TODO: move stylesheets into files?
 			f"""
 			LayerView {{
-				background: {QColor(cats[layer.label.value]["color"]).name()};
-			}}
-			
-			LayerView:hover {{
-				border: 0.5em solid rgba(0,0,0, 0.5);
+				background: {bgColor.name()};
 			}}
 			
 			LayerView[is-selected=true] {{
-				border: 0.5em solid red;
+				border: 0.5em solid rgba(0, 0, 0, 0.4);
+			}}
+			
+			LayerView:hover {{
+				border: 0.5em solid rgba(0, 0, 0, 0.6);
 			}}
 			""")
 		
