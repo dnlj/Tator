@@ -6,14 +6,14 @@
 	},
 	"categories": [
 		{
-			"name": "person",
 			"id": 0,
+			"name": "person",
 			"color": 16711935
 		},
 		{
-			"name": "animal",
 			"id": 1,
-			"color": 16776960
+			"name": "animal",
+			"color": 16711680
 		}
 	],
 	"images": [

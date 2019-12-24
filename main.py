@@ -39,12 +39,12 @@ from ThumbnailPreview import ThumbnailPreview
 
 ################################################################################
 class EditArea(QWidget):
-	onLayerAdded = pyqtSignal([int, LayerBitmap])
-	onLayerDeleted = pyqtSignal([LayerBitmap])
+	onLayersUpdated = pyqtSignal([int, LayerBitmap])
 	activeLayer = None
 	
-	def __init__(self, actions, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, actions, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
+		self.cats = cats
 		self.binds = BindSystem()
 		
 		self.binds.addBind(Bind("close",
@@ -83,19 +83,27 @@ class EditArea(QWidget):
 	def setActiveLayer(self, layer: LayerBitmap):
 		self.activeLayer = layer
 		self.activeAction.setLayer(self.activeLayer)
+		self.update()
 		
 	def addLayer(self, layer):
 		self.layers.append(layer)
-		layer.visible.addListener(lambda new, old: self.update())
+		def fieldChangedListener(new, old):
+			# TODO: This is wrong. This should be the index of the currently selected layer.
+			self.onLayersUpdated.emit(len(self.layers) - 1, layer)
+			self.update()
+		layer.label.addListener(fieldChangedListener)
+		layer.visible.addListener(fieldChangedListener)
 		self.setActiveLayer(layer)
-		self.onLayerAdded.emit(len(self.layers) - 1, layer)
+		# TODO: This is wrong. This should be the index of the currently selected layer.
+		self.onLayersUpdated.emit(len(self.layers) - 1, layer)
 		
 	def addBitmapLayer(self):
 		self.addLayer(LayerBitmap(self.base.height(), self.base.width()))
 		
 	def deleteLayer(self, layer):
 		self.layers.remove(layer)
-		self.onLayerDeleted.emit(layer)
+		# TODO: This is wrong. This should be the index of the currently selected layer.
+		self.onLayersUpdated.emit(len(self.layers) - 1, layer)
 		self.update()
 		
 	def setAction(self, action):
@@ -155,7 +163,16 @@ class EditArea(QWidget):
 				# TODO: See if composing in numpy then converting is faster than converting to QImage and composing
 				mask = layer.mask
 				maskToQt = QImage(mask.data, mask.shape[1], mask.shape[0], QImage.Format_Indexed8)
-				maskToQt.setColorTable([0] * 255 + [layer.color])
+				color = self.cats[layer.label.value]["color"]
+				
+				# Set the alpha
+				color &= 0x00FFFFFF
+				if layer == self.activeLayer:
+					color |= 0xCC000000
+				else:
+					color |= 0x66000000
+					
+				maskToQt.setColorTable([0] * 255 + [color])
 				painter.drawImage(0, 0, maskToQt)
 			
 		self.activeAction.drawHints(self.canvas, self.curPos)
@@ -227,6 +244,10 @@ class MainWindow(QMainWindow):
 		categories = project["categories"]
 		for i in range(len(categories)):
 			if i != categories[i]["id"]: raise RuntimeError("Incorrect category id")
+			oldColor = categories[i]["color"]
+			newColor = QColor()
+			newColor.setRgb(oldColor)
+			categories[i]["color"] = newColor.rgba()
 		
 		# Verify image ids
 		images = project["images"]
@@ -242,7 +263,7 @@ class MainWindow(QMainWindow):
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
 		
-		self.editArea = EditArea(actions)
+		self.editArea = EditArea(actions, categories)
 		self.setCentralWidget(self.editArea)
 		
 		# TODO: Toolbar
@@ -278,8 +299,7 @@ class MainWindow(QMainWindow):
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
 		self.layerPanel.setWidget(self.layerList)
-		self.editArea.onLayerAdded.connect(self.layerList.layerAdded)
-		self.editArea.onLayerDeleted.connect(self.layerList.layerDeleted)
+		self.editArea.onLayersUpdated.connect(self.layerList.layersUpdated)
 		
 		self.addToolBar(self.toolbar)
 		self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)

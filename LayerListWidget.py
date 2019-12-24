@@ -22,9 +22,7 @@ class LayerListWidget(QWidget):
 		layout.addWidget(self.toolbar)
 		self.setLayout(layout)
 	
-	def layerAdded(self, idx: int, layer: LayerBitmap):
+	def layersUpdated(self, idx: int, layer: LayerBitmap):
 		self.listView.updateLayers()
+		# TODO: need logic in case selected layer was deleted
 		self.listView.setLayerSelection(idx)
-		
-	def layerDeleted(self, layer: LayerBitmap):
-		self.listView.updateLayers()

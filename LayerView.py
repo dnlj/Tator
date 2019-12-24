@@ -55,7 +55,7 @@ class LayerView(QWidget):
 		self.setStyleSheet( # TODO: move stylesheets into files?
 			f"""
 			LayerView {{
-				background: {QColor(self.layer.color).name()};
+				background: {QColor(cats[layer.label.value]["color"]).name()};
 			}}
 			
 			LayerView:hover {{

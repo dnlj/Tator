@@ -23,5 +23,4 @@ class LayerBitmap:
 		self.mask = np.zeros((width, height), dtype=np.uint8)
 		self.label = Listenable(0)
 		self.visible = Listenable(True)
-		self.color = randColor() # TODO: change to use color associated with global label list
 		
