@@ -17,7 +17,20 @@ class ActionBrush():
 			triggers=[Input(InputType.MOUSE, Qt.NoButton)]
 		))
 		self.binds.addListener("draw", BindEvent.PRESS, self.pressDraw)
+		self.binds.addListener("draw", BindEvent.RELEASE, self.releaseDraw)
 		self.binds.addListener("draw", BindEvent.TRIGGER, self.triggerDraw)
+		
+		self.drawModifier = False
+		self.binds.addBind(Bind("drawModifier",
+			inputs=[(Input(InputType.KEYBOARD, Qt.Key_Shift), lambda e : e[0])]
+		))
+		self.binds.addListener("drawModifier", BindEvent.PRESS, self.pressDrawModifier)
+		self.binds.addListener("drawModifier", BindEvent.RELEASE, self.releaseDrawModifier)
+		
+		self.binds.addBind(Bind("target", inputs=[],
+			triggers=[Input(InputType.MOUSE, Qt.NoButton)]
+		))
+		self.binds.addListener("target", BindEvent.TRIGGER, self.triggerTarget)
 		
 		self.binds.addBind(Bind("erase",
 			inputs=[(Input(InputType.MOUSE, Qt.RightButton), lambda e : e[0])],
@@ -42,16 +55,39 @@ class ActionBrush():
 		# TODO: Check layer type
 		self.mask = layer.mask if layer else None
 		
+	def pressDrawModifier(self, inp: Input, val, inputs):
+		self.drawModifier = True
+		
+	def releaseDrawModifier(self, inp: Input, val, inputs):
+		self.drawModifier = False
+		if self.oldPos != self.curPos:
+			self.apply(255)
+			self.oldPos = self.curPos
+		
+	def triggerTarget(self, inp: Input, val, inputs):
+		pass
+		
 	def pressDraw(self, inp: Input, val, inputs):
 		self.oldPos = val[1]
+		if self.drawModifier: return
 		self.curPos = val[1]
 		self.apply(255)
+	
+	def releaseDraw(self, inp: Input, val, inputs):
+		if not self.drawModifier: return
+		self.curPos = val[1]
+		self.apply(255)
+		self.oldPos = val[1]
 		
 	def triggerDraw(self, inp: Input, val, inputs):
-		self.oldPos = self.curPos
-		self.curPos = val[1]
-		self.apply(255)
-		
+		if self.drawModifier:
+			self.curPos = val[1]
+		else:
+			self.oldPos = self.curPos
+			self.curPos = val[1]
+			self.apply(255)
+	
+	# TODO: make erase and draw use the same functions
 	def pressErase(self, inp: Input, val, inputs):
 		self.oldPos = val[1]
 		self.curPos = val[1]
@@ -64,15 +100,12 @@ class ActionBrush():
 		
 	def triggerResize(self, inp: Input, val, inputs):
 		self.brushRadius = int(max(1, self.brushRadius + val/40))
-		
-	def apply(self, value: np.uint8):
-		begin = np.array([self.curPos.y(), self.curPos.x()])
-		end = np.array([self.oldPos.y(), self.oldPos.x()])
-		shape = self.mask.shape
-		rad = self.brushRadius
-		
+	
+	# TODO: why is this a member function?
+	def drawBrush(self, out, begin, end, rad, value: np.uint8 = 255):
+		shape = out.shape
 		rr, cc = ski.draw.ellipse(begin[0], begin[1], rad, rad, shape=shape)
-		self.mask[rr, cc] = value
+		out[rr, cc] = value
 		
 		if not np.array_equal(begin, end):
 			rows = np.empty(4)
@@ -96,10 +129,15 @@ class ActionBrush():
 			cols[3] = begin[1] - rectNorm[1]
 			
 			rr, cc = ski.draw.polygon(rows, cols, shape=shape)
-			self.mask[rr, cc] = value
+			out[rr, cc] = value
 			
 			rr, cc = ski.draw.ellipse(end[0], end[1], rad, rad, shape=shape)
-			self.mask[rr, cc] = value
+			out[rr, cc] = value
+			
+	def apply(self, value: np.uint8):
+		begin = np.array([self.curPos.y(), self.curPos.x()])
+		end = np.array([self.oldPos.y(), self.oldPos.x()])
+		self.drawBrush(self.mask, begin, end, self.brushRadius)
 			
 	def drawHints(self, canvas: QImage, target: QPoint):
 		# TODO: Cache hint layer?
@@ -117,8 +155,14 @@ class ActionBrush():
 			rr, cc = ski.draw.ellipse(y, x, rad, rad, shape=shape)
 			hints[rr, cc] = 0
 		
+		if self.drawModifier:
+			begin = np.array([self.curPos.y(), self.curPos.x()])
+			end = np.array([self.oldPos.y(), self.oldPos.x()])
+			self.drawBrush(hints, begin, end, self.brushRadius)
+		
 		with QPainter(canvas) as painter:
 			hintsToQt = QImage(hints.data, hints.shape[1], hints.shape[0], QImage.Format_Indexed8)
 			hintsToQt.setColorTable([0] * 255 + [qRgba(0,0,0,127)])
 			painter.drawImage(0, 0, hintsToQt)
+			# TODO: draw line hint
 			
