@@ -236,17 +236,6 @@ class MainWindow(QMainWindow):
 			},
 		}
 		
-		labels = [
-			"",
-			"Label A",
-			"Label B",
-			"Label C",
-			"Label D",
-			"Label E",
-		]
-		
-		categories = None
-		
 		with open("project.json") as pfile:
 			self.project = json.load(pfile)
 		
@@ -279,6 +268,9 @@ class MainWindow(QMainWindow):
 		
 		# TODO: Toolbar
 		self.toolbar = QToolBar("Tools")
+		self.toolbar.addAction("Prev", self.prevImage) # TODO: Keyboard shortcut
+		self.toolbar.addAction("Next", self.nextImage) # TODO: Keyboard shortcut
+		self.toolbar.addSeparator()
 		self.toolbar.addAction("Box")
 		self.toolbar.addAction("Polygon")
 		self.toolbar.addSeparator()
@@ -290,20 +282,18 @@ class MainWindow(QMainWindow):
 		self.toolbar.addSeparator()
 		self.toolbar.addAction("Smart Select")
 		
-		# TODO: Look into flow layout
-		self.thumbnailPreview = ThumbnailPreview()
-		self.imagePanel = QDockWidget("")
-		self.imagePanel.setFeatures(windowFeatures)
-		self.imagePanel.setWidget(self.thumbnailPreview)
-		self.thumbnailPreview.prevButton.clicked.connect(lambda: self.prevImage())
-		self.thumbnailPreview.nextButton.clicked.connect(lambda: self.nextImage())
-		#self.imagePanel.setWidget(self.thumbList)
-		# TODO: Image list with search bar (icon indicating if they have annotations)
-		# TODO: preview of 5 imgs. prev 2, current and next 2
-		# TODO: next/prev button
 		
-		self.labelPanel = QDockWidget("Categories Panel")
-		self.labelPanel.setFeatures(windowFeatures)
+		# TODO: This isnt really important. Make a proper image browser/explorer window if you want this.
+		#self.thumbnailPreview = ThumbnailPreview()
+		#self.imagePanel = QDockWidget("")
+		#self.imagePanel.setFeatures(windowFeatures)
+		#self.imagePanel.setWidget(self.thumbnailPreview)
+		#self.thumbnailPreview.prevButton.clicked.connect(lambda: self.prevImage())
+		#self.thumbnailPreview.nextButton.clicked.connect(lambda: self.nextImage())
+		
+		# TODO: Again, this isnt really needed here. Make a proper category editor window.
+		#self.labelPanel = QDockWidget("Categories Panel")
+		#self.labelPanel.setFeatures(windowFeatures)
 		
 		self.layerList = LayerListWidget(cats)
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
@@ -316,8 +306,8 @@ class MainWindow(QMainWindow):
 		self.layerPanel.setWidget(self.layerList)
 		
 		self.addToolBar(self.toolbar)
-		self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)
-		self.addDockWidget(Qt.RightDockWidgetArea, self.labelPanel)
+		#self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)
+		#self.addDockWidget(Qt.RightDockWidgetArea, self.labelPanel)
 		self.addDockWidget(Qt.RightDockWidgetArea, self.layerPanel)
 		self.setStatusBar(QStatusBar())
 		
