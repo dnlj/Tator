@@ -18,7 +18,7 @@ class LayerViewList(QWidget):
 		self.layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
 		self.layout.setDirection(QBoxLayout.BottomToTop)
 		self.setLayout(self.layout)
-		
+	
 	def updateLayers(self, layers):
 		selectedLayer = self.selected and self.selected.layer or None
 		layerSelected = False
@@ -34,12 +34,13 @@ class LayerViewList(QWidget):
 			layerView.onClicked.connect(self.layerViewClicked)
 			layerView.onDelete.connect(lambda layer=layer: self.onDeleteLayer.emit(layer)) # I love this language.
 			self.layout.addWidget(layerView)
+			layerView.show()
 			if layer is selectedLayer:
 				layerSelected = True
 				self.setLayerSelection(layerView)
 		if not layerSelected:
 			self.setLayerSelection(None)
-				
+	
 	def layerViewClicked(self, layerView: LayerView):
 		self.setLayerSelection(layerView)
 		

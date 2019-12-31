@@ -79,6 +79,8 @@ class EditArea(QWidget):
 		self.canvas.fill(Qt.transparent)
 		self.layers = []
 		self.layersUpdate()
+		self.recalcScale()
+		self.update()
 	
 	def getLayers(self):
 		pass # TODO: impl
@@ -115,11 +117,14 @@ class EditArea(QWidget):
 		self.activeAction = self.actions[action]
 		self.activeAction.setLayer(self.activeLayer)
 		
-	def resizeEvent(self, event: QResizeEvent):
+	def recalcScale(self):
 		self.scaledScale = min(self.width() / self.base.width(), self.height() / self.base.height())
 		self.scaledSize = self.base.size() * self.scaledScale
 		self.scaledOffset = (self.size() - self.scaledSize) / 2
 		self.scaledOffset = QPoint(self.scaledOffset.width(), self.scaledOffset.height())
+		
+	def resizeEvent(self, event: QResizeEvent):
+		self.recalcScale()
 		
 	def mousePosToCanvasPos(self, pos: QPoint):
 		return (pos - self.scaledOffset) / self.scaledScale
@@ -179,7 +184,8 @@ class EditArea(QWidget):
 					
 				maskToQt.setColorTable([0] * 255 + [color])
 				painter.drawImage(0, 0, maskToQt)
-			
+		
+		# TODO: make hints inverse of background color?
 		self.activeAction.drawHints(self.canvas, self.curPos)
 		
 	def paintEvent(self, event: QPaintEvent):
@@ -303,7 +309,7 @@ class MainWindow(QMainWindow):
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
 		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))
-		self.editArea.onLayersUpdated.addListener(self.layerList.layersUpdated)
+		self.editArea.onLayersUpdated.addListener(self.layerList.updateLayers)
 		
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)

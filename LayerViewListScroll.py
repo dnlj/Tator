@@ -24,4 +24,4 @@ class LayerViewListScroll(QScrollArea):
 		
 	def updateLayers(self, layers):
 		self.layerViewList.updateLayers(layers)
-		self.updateGeometry() # TODO: can we move this into layerListView udpateLayers? does it propogate back up?
+		self.updateGeometry()

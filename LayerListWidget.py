@@ -22,7 +22,7 @@ class LayerListWidget(QWidget):
 		layout.addWidget(self.toolbar)
 		self.setLayout(layout)
 	
-	def layersUpdated(self, layers):
+	def updateLayers(self, layers):
 		self.listView.updateLayers(layers)
 		
 	def setLayerSelection(self, idx):
