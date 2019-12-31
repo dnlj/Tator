@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 from LayerViewList import LayerViewList
 
 class LayerViewListScroll(QScrollArea):
-	def __init__(self, layers, cats, parent=None):
+	def __init__(self, cats, parent=None):
 		super().__init__(parent=parent)
 		
 		self.setFrameShape(QFrame.NoFrame)
@@ -13,7 +13,7 @@ class LayerViewListScroll(QScrollArea):
 		self.setWidgetResizable(True)
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 		
-		self.layerViewList = LayerViewList(layers=layers, cats=cats)
+		self.layerViewList = LayerViewList(cats=cats)
 		self.setWidget(self.layerViewList)
 		
 	def setLayerSelection(self, idx: int):
@@ -22,6 +22,6 @@ class LayerViewListScroll(QScrollArea):
 	def sizeHint(self):
 		return self.layerViewList.sizeHint() + self.verticalScrollBar().sizeHint()
 		
-	def updateLayers(self):
-		self.layerViewList.updateLayers()
+	def updateLayers(self, layers):
+		self.layerViewList.updateLayers(layers)
 		self.updateGeometry() # TODO: can we move this into layerListView udpateLayers? does it propogate back up?

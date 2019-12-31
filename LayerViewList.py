@@ -9,10 +9,9 @@ class LayerViewList(QWidget):
 	onSelectionChanged = pyqtSignal([object])
 	onDeleteLayer = pyqtSignal([LayerBitmap])
 	
-	def __init__(self, layers, cats, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.selected = None
-		self.layers = layers
 		self.cats = cats
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
 		self.layout = QVBoxLayout()
@@ -20,7 +19,7 @@ class LayerViewList(QWidget):
 		self.layout.setDirection(QBoxLayout.BottomToTop)
 		self.setLayout(self.layout)
 		
-	def updateLayers(self):
+	def updateLayers(self, layers):
 		selectedLayer = self.selected and self.selected.layer or None
 		layerSelected = False
 		
@@ -30,7 +29,7 @@ class LayerViewList(QWidget):
 				taken.widget().deleteLater()
 			else:
 				break
-		for layer in self.layers:
+		for layer in layers:
 			layerView = LayerView(layer, self.cats)
 			layerView.onClicked.connect(self.layerViewClicked)
 			layerView.onDelete.connect(lambda layer=layer: self.onDeleteLayer.emit(layer)) # I love this language.

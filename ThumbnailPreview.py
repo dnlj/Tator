@@ -40,8 +40,12 @@ class ThumbnailPreview(QWidget):
 		btnCont = QWidget()
 		btnLayout = QHBoxLayout()
 		btnLayout.setContentsMargins(0, 0, 0, 0)
-		btnLayout.addWidget(QPushButton("Prev"))
-		btnLayout.addWidget(QPushButton("Next"))
+		
+		self.prevButton = QPushButton("Prev")
+		self.nextButton = QPushButton("Next")
+		btnLayout.addWidget(self.prevButton)
+		btnLayout.addWidget(self.nextButton)
+		
 		btnCont.setLayout(btnLayout)
 		btnCont.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 		layout.addWidget(btnCont)

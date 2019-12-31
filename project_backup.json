@@ -1,0 +1,39 @@
+{
+	"info": {
+		"title": "",
+		"description": "",
+		"data_root": "."
+	},
+	"categories": [
+		{
+			"id": 0,
+			"name": "person",
+			"color": 16711935
+		},
+		{
+			"id": 1,
+			"name": "animal",
+			"color": 16711680
+		}
+	],
+	"images": [
+		{
+			"id": 0,
+			"uuid": "38a58b5d-910a-4402-9bd7-429668abd126",
+			"file": "images/data2017/38a58b5d-910a-4402-9bd7-429668abd126.jpg",
+			"md5": "031ae634a46523720f144a11b42b2429",
+			"width": 512,
+			"height": 384
+		}
+	],
+	"annotations": [
+		{
+			"id": 0,
+			"bounds": [120, 250, 201, 332],
+			"img_id": 0,
+			"cat_id": 1,
+			"type": "rle",
+			"data": [69350, 13102, 16076, 12195, 13102, 16076, 12195, 13102, 16076, 12195, 13102, 16076, 12195]
+		}
+	]
+}
