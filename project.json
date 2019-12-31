@@ -19,11 +19,35 @@
 	"images": [
 		{
 			"id": 0,
-			"uuid": "38a58b5d-910a-4402-9bd7-429668abd126",
-			"file": "images/data2017/38a58b5d-910a-4402-9bd7-429668abd126.jpg",
-			"md5": "031ae634a46523720f144a11b42b2429",
+			"path": "data/test.jpg",
+			"md5": "dd51fd9e00e828de80f6d9b8720368b4",
+			"source": "http://www.example.com/images/test.jpg",
 			"width": 512,
-			"height": 384
+			"height": 341
+		},
+		{
+			"id": 1,
+			"path": "data/test2.jpg",
+			"md5": "b8dd769eadafa26342a1e4654b0c8cf1",
+			"source": "unknown",
+			"width": 512,
+			"height": 341
+		},
+		{
+			"id": 2,
+			"path": "data/test3.jpg",
+			"md5": "589ee3a2717cd70ac4b8e0fc620203b3",
+			"source": "unknown",
+			"width": 500,
+			"height": 333
+		},
+		{
+			"id": 3,
+			"path": "data/test4.jpg",
+			"md5": "4c31cbd472e63e519538f6534a73876b",
+			"source": "unknown",
+			"width": 500,
+			"height": 300
 		}
 	],
 	"annotations": [

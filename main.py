@@ -289,8 +289,8 @@ class MainWindow(QMainWindow):
 		self.imagePanel = QDockWidget("")
 		self.imagePanel.setFeatures(windowFeatures)
 		self.imagePanel.setWidget(self.thumbnailPreview)
-		self.thumbnailPreview.prevButton.clicked.connect(lambda: print("prev"))
-		self.thumbnailPreview.nextButton.clicked.connect(lambda: print("next"))
+		self.thumbnailPreview.prevButton.clicked.connect(lambda: self.prevImage())
+		self.thumbnailPreview.nextButton.clicked.connect(lambda: self.nextImage())
 		#self.imagePanel.setWidget(self.thumbList)
 		# TODO: Image list with search bar (icon indicating if they have annotations)
 		# TODO: preview of 5 imgs. prev 2, current and next 2
@@ -315,32 +315,28 @@ class MainWindow(QMainWindow):
 		self.addDockWidget(Qt.RightDockWidgetArea, self.layerPanel)
 		self.setStatusBar(QStatusBar())
 		
-		self.imageIt = os.scandir("data")
+		self.curImage = -1
 		self.nextImage()
 	
 	def setImage(self, path):
-		print(path)
 		self.editArea.setImage(QImage(path))
 		self.editArea.addBitmapLayer()
 		self.layerList.setLayerSelection(0)
 		
 	def nextImage(self, skipKnown: bool = False):
-		while True:
-			try:
-				image = next(self.imageIt)
-			except StopIteration:
-				return # TODO: handle
-				
-			if not image.is_file(): continue
-			if not skipKnown: return self.setImage(image.path)
-			
-			for img in self.project["images"]:
-				if img.file == image.path: continue
+		if self.curImage == len(self.project["images"]) - 1: return # TODO: warning or something?
+		self.curImage += 1
+		img = self.project["images"][self.curImage]
+		self.setImage(img["path"])
 		
 	def prevImage(self):
-		pass
+		if self.curImage == 0: return # TODO: warning or something?
+		self.curImage -= 1
+		img = self.project["images"][self.curImage]
+		self.setImage(img["path"])
 	
 	#def closeEvent(self, event: QCloseEvent):
+	# TODO: write to temp file then rename once complete
 	#	with open("test.json", "w") as pfile:
 	#		json.dump(
 	#			self.project,
