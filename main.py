@@ -4,6 +4,7 @@ from PyQt5.QtGui import *
 
 import rapidjson as json
 
+from binder import *
 from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 from LayerListWidget import LayerListWidget
@@ -32,6 +33,7 @@ from EditArea import EditArea
 class MainWindow(QMainWindow):
 	def __init__(self, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
+		self.setFocusPolicy(Qt.WheelFocus)
 		
 		windowFeatures = QDockWidget.DockWidgetMovable
 		
@@ -46,6 +48,7 @@ class MainWindow(QMainWindow):
 			},
 		}
 		
+		########################################################################
 		with open("project.json") as pfile:
 			self.project = json.load(pfile)
 		
@@ -69,12 +72,14 @@ class MainWindow(QMainWindow):
 		for i in range(len(anns)):
 			if i != anns[i]["id"]: raise RuntimeError("Incorrect annotation id")
 			
+		#######################################################################
 		self.setWindowTitle("Tator")
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
 		
-		self.editArea = EditArea(actions, cats)
+		self.editArea = EditArea(cats)
 		self.setCentralWidget(self.editArea)
+		self.editArea.setAction(ActionBrush)
 		
 		# TODO: Toolbar
 		self.toolbar = QToolBar("Tools")
@@ -121,6 +126,23 @@ class MainWindow(QMainWindow):
 		self.addDockWidget(Qt.RightDockWidgetArea, self.layerPanel)
 		self.setStatusBar(QStatusBar())
 		
+		########################################################################
+		self.binds = BindSystem()
+		
+		self.binds.addBind(Bind("close",
+			inputs=[(Input(InputType.KEYBOARD, Qt.Key_Escape), lambda e : e[0])]
+		))
+		self.binds.addListener("close", BindEvent.PRESS, lambda i, v, ii: self.close())
+		
+		for a, d in actions.items():
+			self.binds.addBind(Bind(d["name"],
+				inputs=[(Input(InputType.KEYBOARD, d["key"]), lambda e : e[0])]
+			))
+			def callback(input, value, inputs, a=a): self.editArea.setAction(a)
+			self.binds.addListener(d["name"], BindEvent.PRESS, callback)
+		
+		#######################################################################
+		
 		self.curImage = -1
 		self.nextImage()
 	
@@ -141,6 +163,14 @@ class MainWindow(QMainWindow):
 		img = self.project["images"][self.curImage]
 		self.setImage(img["path"])
 	
+	def keyPressEvent(self, event: QKeyEvent):
+		self.binds.update(Input(InputType.KEYBOARD, event.key()), (True,))
+		self.editArea.keyPressEvent(event)
+		
+	def keyReleaseEvent(self, event: QKeyEvent):
+		self.binds.update(Input(InputType.KEYBOARD, event.key()), (False,))
+		self.editArea.keyReleaseEvent(event)
+		
 	#def closeEvent(self, event: QCloseEvent):
 	# TODO: write to temp file then rename once complete
 	#	with open("test.json", "w") as pfile:

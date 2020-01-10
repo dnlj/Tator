@@ -9,37 +9,21 @@ from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 
 class EditArea(QWidget):
-	def __init__(self, actions, cats, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.onLayersUpdated = Listenable()
+		self.actions = {}
 		self.activeLayer = None
 		
 		self.cats = cats
-		self.binds = BindSystem()
-		
-		self.binds.addBind(Bind("close",
-			inputs=[(Input(InputType.KEYBOARD, Qt.Key_Escape), lambda e : e[0])]
-		))
-		self.binds.addListener("close", BindEvent.PRESS, lambda i, v, ii: self.parent().close())
-		
-		# TODO: Should these binds be the MainWindow?
-		for a, d in actions.items():
-			self.binds.addBind(Bind(d["name"],
-				inputs=[(Input(InputType.KEYBOARD, d["key"]), lambda e : e[0])]
-			))
-			def callback(input, value, inputs, a=a): self.setAction(a)
-			self.binds.addListener(d["name"], BindEvent.PRESS, callback)
-		
-		self.setFocusPolicy(Qt.WheelFocus)
 		self.setMouseTracking(True)
 		self.curPos = QPoint()
 		self.oldPos = QPoint()
 		self.points = []
 		
-		self.actions = {}
-		for a, d in actions.items():
-			self.actions[a] = a()
-		self.activeAction = self.actions[ActionBrush]
+		#for a, d in actions.items(): # TODO: remove, no longer needed
+		#	self.actions[a] = a()
+		#self.activeAction = self.actions[ActionBrush]
 	
 	def setImage(self, img: QImage):
 		self.base = img
@@ -82,6 +66,8 @@ class EditArea(QWidget):
 		self.update()
 		
 	def setAction(self, action):
+		if not action in self.actions:
+			self.actions[action] = action()
 		self.activeAction = self.actions[action]
 		self.activeAction.setLayer(self.activeLayer)
 		
@@ -98,11 +84,8 @@ class EditArea(QWidget):
 		return (pos - self.scaledOffset) / self.scaledScale
 		
 	def updateBindSystems(self, inp: Input, val: Any):
-		self.binds.update(inp, val)
-		
 		if self.activeLayer and self.activeLayer.visible.value:
 			self.activeAction.binds.update(inp, val)
-			
 		self.update()
 		
 	def mousePressEvent(self, event: QMouseEvent):
