@@ -48,6 +48,23 @@ class MainWindow(QMainWindow):
 			},
 		}
 		
+		self.binds = BindSystem()
+		
+		self.binds.addBind(Bind("prev",
+			inputs=[(Input(InputType.KEYBOARD, Qt.Key_Comma), lambda e: e[0])]
+		))
+		self.binds.addListener("prev", BindEvent.PRESS, lambda *_: self.prevImage())
+		
+		self.binds.addBind(Bind("next",
+			inputs=[(Input(InputType.KEYBOARD, Qt.Key_Period), lambda e: e[0])]
+		))
+		self.binds.addListener("next", BindEvent.PRESS, lambda *_: self.nextImage())
+		
+		self.binds.addBind(Bind("close",
+			inputs=[(Input(InputType.KEYBOARD, Qt.Key_Escape), lambda e: e[0])]
+		))
+		self.binds.addListener("close", BindEvent.PRESS, lambda *_: self.close())
+		
 		########################################################################
 		with open("project.json") as pfile:
 			self.project = json.load(pfile)
@@ -81,7 +98,6 @@ class MainWindow(QMainWindow):
 		self.setCentralWidget(self.editArea)
 		self.editArea.setAction(ActionBrush)
 		
-		# TODO: Toolbar
 		self.toolbar = QToolBar("Tools")
 		self.toolbar.addAction("Prev", self.prevImage) # TODO: Keyboard shortcut
 		self.toolbar.addAction("Next", self.nextImage) # TODO: Keyboard shortcut
@@ -91,8 +107,13 @@ class MainWindow(QMainWindow):
 		self.toolbar.addSeparator()
 		
 		for a, d in actions.items():
-			def callback(a=a): self.editArea.setAction(a)
+			def callback(*_, a=a): self.editArea.setAction(a)
 			self.toolbar.addAction(d["name"], callback)
+			self.binds.addBind(Bind(d["name"],
+				inputs=[(Input(InputType.KEYBOARD, d["key"]), lambda e : e[0])]
+			))
+			self.binds.addListener(d["name"], BindEvent.PRESS, callback)
+			
 		self.toolbar.addAction("Wand Select")
 		self.toolbar.addSeparator()
 		self.toolbar.addAction("Smart Select")
@@ -125,23 +146,6 @@ class MainWindow(QMainWindow):
 		#self.addDockWidget(Qt.RightDockWidgetArea, self.labelPanel)
 		self.addDockWidget(Qt.RightDockWidgetArea, self.layerPanel)
 		self.setStatusBar(QStatusBar())
-		
-		########################################################################
-		self.binds = BindSystem()
-		
-		self.binds.addBind(Bind("close",
-			inputs=[(Input(InputType.KEYBOARD, Qt.Key_Escape), lambda e : e[0])]
-		))
-		self.binds.addListener("close", BindEvent.PRESS, lambda i, v, ii: self.close())
-		
-		for a, d in actions.items():
-			self.binds.addBind(Bind(d["name"],
-				inputs=[(Input(InputType.KEYBOARD, d["key"]), lambda e : e[0])]
-			))
-			def callback(input, value, inputs, a=a): self.editArea.setAction(a)
-			self.binds.addListener(d["name"], BindEvent.PRESS, callback)
-		
-		#######################################################################
 		
 		self.curImage = -1
 		self.nextImage()
