@@ -4,16 +4,21 @@
 		"description": "",
 		"data_root": "."
 	},
-	"categories": [
+	"labels": [
 		{
 			"id": 0,
 			"name": "person",
-			"color": 16711935
+			"color": "#FF00FF"
 		},
 		{
 			"id": 1,
 			"name": "animal",
-			"color": 16711680
+			"color": "#FF0000"
+		},
+		{
+			"id": 2,
+			"name": "car",
+			"color": "#FFFF00"
 		}
 	],
 	"images": [

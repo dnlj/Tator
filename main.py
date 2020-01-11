@@ -9,6 +9,7 @@ from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 from LayerListWidget import LayerListWidget
 from EditArea import EditArea
+from LabelEditor import LabelEditor
 
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
 #	https://stackoverflow.com/questions/16705721/opencv-floodfill-with-mask
@@ -71,13 +72,12 @@ class MainWindow(QMainWindow):
 		
 		# TODO: We should be able to delete things from the json file and have it just work. Will need to change this.
 		# Verify category ids
-		cats = self.project["categories"]
-		for i in range(len(cats)):
-			if i != cats[i]["id"]: raise RuntimeError("Incorrect category id")
-			oldColor = cats[i]["color"]
-			newColor = QColor()
-			newColor.setRgb(oldColor)
-			cats[i]["color"] = newColor.rgba()
+		labels = self.project["labels"]
+		for i in range(len(labels)):
+			if i != labels[i]["id"]: raise RuntimeError("Incorrect label id")
+			oldColor = labels[i]["color"]
+			newColor = QColor(oldColor)
+			labels[i]["color"] = newColor.rgba()
 		
 		# Verify image ids
 		imgs = self.project["images"]
@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
 		
-		self.editArea = EditArea(cats)
+		self.editArea = EditArea(labels)
 		self.setCentralWidget(self.editArea)
 		self.editArea.setAction(ActionBrush)
 		
@@ -131,17 +131,23 @@ class MainWindow(QMainWindow):
 		#self.labelPanel = QDockWidget("Categories Panel")
 		#self.labelPanel.setFeatures(windowFeatures)
 		
+		# TODO: Move into own file?
 		self.otherPanel = QDockWidget("Other")
 		self.otherPanel.setFeatures(windowFeatures)
 		otherWidget = QWidget()
 		otherLayout = QHBoxLayout()
-		otherLayout.addWidget(QPushButton("Labels"))
-		otherLayout.addWidget(QPushButton("Browse"))
 		otherWidget.setLayout(otherLayout)
+		
+		otherWidget.labelsButton = QPushButton("Labels")
+		otherWidget.labelWindow = LabelEditor(self.project["labels"], self, Qt.Window)
+		otherWidget.labelsButton.clicked.connect(lambda: otherWidget.labelWindow.show())
+		
+		otherLayout.addWidget(otherWidget.labelsButton)
+		otherLayout.addWidget(QPushButton("Browse"))
 		otherWidget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
 		self.otherPanel.setWidget(otherWidget)
 		
-		self.layerList = LayerListWidget(cats)
+		self.layerList = LayerListWidget(labels)
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
 		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))

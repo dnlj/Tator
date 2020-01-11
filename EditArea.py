@@ -9,21 +9,17 @@ from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 
 class EditArea(QWidget):
-	def __init__(self, cats, parent=None, flags=Qt.WindowFlags()):
+	def __init__(self, labels, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.onLayersUpdated = Listenable()
 		self.actions = {}
 		self.activeLayer = None
 		
-		self.cats = cats
+		self.labels = labels
 		self.setMouseTracking(True)
 		self.curPos = QPoint()
 		self.oldPos = QPoint()
 		self.points = []
-		
-		#for a, d in actions.items(): # TODO: remove, no longer needed
-		#	self.actions[a] = a()
-		#self.activeAction = self.actions[ActionBrush]
 	
 	def setImage(self, img: QImage):
 		self.base = img
@@ -124,7 +120,7 @@ class EditArea(QWidget):
 				# TODO: See if composing in numpy then converting is faster than converting to QImage and composing
 				mask = layer.mask
 				maskToQt = QImage(mask.data, mask.shape[1], mask.shape[0], QImage.Format_Indexed8)
-				color = self.cats[layer.label.value]["color"]
+				color = self.labels[layer.label.value]["color"]
 				
 				# Set the alpha
 				color &= 0x00FFFFFF
