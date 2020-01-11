@@ -99,8 +99,8 @@ class MainWindow(QMainWindow):
 		self.editArea.setAction(ActionBrush)
 		
 		self.toolbar = QToolBar("Tools")
-		self.toolbar.addAction("Prev", self.prevImage) # TODO: Keyboard shortcut
-		self.toolbar.addAction("Next", self.nextImage) # TODO: Keyboard shortcut
+		self.toolbar.addAction("Prev", self.prevImage)
+		self.toolbar.addAction("Next", self.nextImage)
 		self.toolbar.addSeparator()
 		self.toolbar.addAction("Box")
 		self.toolbar.addAction("Polygon")
@@ -131,6 +131,16 @@ class MainWindow(QMainWindow):
 		#self.labelPanel = QDockWidget("Categories Panel")
 		#self.labelPanel.setFeatures(windowFeatures)
 		
+		self.otherPanel = QDockWidget("Other")
+		self.otherPanel.setFeatures(windowFeatures)
+		otherWidget = QWidget()
+		otherLayout = QHBoxLayout()
+		otherLayout.addWidget(QPushButton("Labels"))
+		otherLayout.addWidget(QPushButton("Browse"))
+		otherWidget.setLayout(otherLayout)
+		otherWidget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
+		self.otherPanel.setWidget(otherWidget)
+		
 		self.layerList = LayerListWidget(cats)
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
@@ -142,8 +152,7 @@ class MainWindow(QMainWindow):
 		self.layerPanel.setWidget(self.layerList)
 		
 		self.addToolBar(self.toolbar)
-		#self.addDockWidget(Qt.LeftDockWidgetArea, self.imagePanel)
-		#self.addDockWidget(Qt.RightDockWidgetArea, self.labelPanel)
+		self.addDockWidget(Qt.RightDockWidgetArea, self.otherPanel)
 		self.addDockWidget(Qt.RightDockWidgetArea, self.layerPanel)
 		self.setStatusBar(QStatusBar())
 		
