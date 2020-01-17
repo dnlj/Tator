@@ -18,6 +18,9 @@ class LayerView(QWidget):
 	def __init__(self, layer, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.layer = layer
+		self.cats = cats
+		self.updatingCategories = False
+		
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 		
 		layout = QHBoxLayout()
@@ -26,21 +29,17 @@ class LayerView(QWidget):
 		# Visibility toggle checkbox
 		visBox = QCheckBox() # TODO: Custom eye icons?
 		visBox.setCheckState(Qt.Checked if layer.visible.value else Qt.Unchecked)
-		visBox.stateChanged.connect(self.onStateChanged)
+		visBox.stateChanged.connect(self.callback_onVisibilityChanged)
 		layout.addWidget(visBox)
 		
 		# TODO: Layer Preview
 		
 		# Layer label dropdown
-		dropdown = ComboBoxNoScroll()
-		for cat in cats:
-			dropdown.addItem(cat["name"], cat["id"])
-		dropdown.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
-		dropdown.setCurrentIndex(layer.label.value)
-		# TODO: we need to listen for this somewhere to update the layers (bgcolor)
-		def onDropdownChanged(idx): layer.label.value = dropdown.itemData(idx)
-		dropdown.currentIndexChanged.connect(onDropdownChanged)
-		layout.addWidget(dropdown)
+		self.dropdown = ComboBoxNoScroll()
+		self.dropdown.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
+		self.dropdown.currentIndexChanged.connect(self.callback_onDropdownChanged)
+		self.updateCategories()
+		layout.addWidget(self.dropdown)
 		
 		# Layer type icon
 		layout.addWidget(QLabel("[B]")) # TODO: Icon
@@ -67,7 +66,21 @@ class LayerView(QWidget):
 				border: 0.5em solid rgba(0, 0, 0, 0.6);
 			}}
 			""")
+	
+	def callback_onDropdownChanged(self, idx):
+		# TODO: we need to listen for this somewhere to update the layers (bgcolor)
+		if not self.updatingCategories:
+			self.layer.label.value = self.dropdown.itemData(idx)
 		
+	def updateCategories(self):
+		self.updatingCategories = True
+		self.dropdown.clear()
+		for cat in self.cats:
+			self.dropdown.addItem(cat["name"], cat["id"])
+		self.dropdown.setCurrentIndex(self.layer.label.value)
+		self.update()
+		self.updatingCategories = False
+			
 	# TODO: Needed for stylesheet support? what does this do exactly?
 	def paintEvent(self, event: QPaintEvent):
 		opt = QStyleOption()
@@ -75,8 +88,8 @@ class LayerView(QWidget):
 		painter = QPainter(self)
 		self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
 		
-	def onStateChanged(self, state: Qt.CheckState):
-		self.layer.visible.value = bool(state) # TODO: how force EditArea to redraw
+	def callback_onVisibilityChanged(self, state: Qt.CheckState):
+		self.layer.visible.value = bool(state)
 		
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton: # TODO: Change to bind system

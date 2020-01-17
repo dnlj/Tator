@@ -139,8 +139,9 @@ class MainWindow(QMainWindow):
 		otherWidget.setLayout(otherLayout)
 		
 		otherWidget.labelsButton = QPushButton("Labels")
-		otherWidget.labelWindow = LabelEditor(self.project["labels"], self, Qt.Window)
-		otherWidget.labelsButton.clicked.connect(lambda: otherWidget.labelWindow.show())
+		otherWidget.labelEditor = LabelEditor(self.project["labels"], self, Qt.Window)
+		otherWidget.labelsButton.clicked.connect(lambda: otherWidget.labelEditor.show())
+		otherWidget.labelEditor.onLabelAdded.addListener(lambda label: self.layerList.updateCategories())
 		
 		otherLayout.addWidget(otherWidget.labelsButton)
 		otherLayout.addWidget(QPushButton("Browse"))

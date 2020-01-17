@@ -25,3 +25,6 @@ class LayerViewListScroll(QScrollArea):
 	def updateLayers(self, layers):
 		self.layerViewList.updateLayers(layers)
 		self.updateGeometry()
+		
+	def updateCategories(self):
+		self.layerViewList.updateCategories()
