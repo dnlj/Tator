@@ -14,19 +14,18 @@ class ColorButton(QPushButton):
 		painter = QPainter(self)
 		painter.fillRect(0, 0, self.width(), self.height(), self.color)
 		
-
 # TODO: Label or category? what term does coco use?
-class LabelWidget(QWidget):
-	def __init__(self, label, parent=None, flags=Qt.WindowFlags()):
+class CategoryWidget(QWidget):
+	def __init__(self, cat, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
-		self.label = label
+		self.cat = cat
 		
 		layout = QHBoxLayout()
 		self.setLayout(layout)
 		
-		layout.addWidget(QLabel(label["name"]))
+		layout.addWidget(QLabel(cat["name"]))
 		
-		self.colorButton = ColorButton(label["color"])
+		self.colorButton = ColorButton(cat["color"])
 		self.colorButton.clicked.connect(lambda: self.setColor(QColorDialog.getColor(options=QColorDialog.DontUseNativeDialog).rgba()))
 		layout.addWidget(self.colorButton)
 		
@@ -36,7 +35,7 @@ class LabelWidget(QWidget):
 		# TODO: edit name
 		
 	def setColor(self, color):
-		self.label["color"] = color
+		self.cat["color"] = color
 		self.colorButton.setColor(color)
 		self.update()
 		

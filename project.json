@@ -4,7 +4,7 @@
 		"description": "",
 		"data_root": "."
 	},
-	"labels": [
+	"categories": [
 		{
 			"id": 0,
 			"name": "person",

@@ -2,16 +2,20 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from LabelWidget import LabelWidget
+from CategoryWidget import CategoryWidget
 from Listenable import Listenable
 
-class LabelEditor(QWidget):
-	def __init__(self, labels, parent=None, flags=Qt.WindowFlags()):
+class CategoryList():
+	def __init__(self, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
-		self.onLabelAdded = Listenable()
-		self.labels = labels
+	
+class CategoryEditor(QWidget):
+	def __init__(self, cats, parent=None, flags=Qt.WindowFlags()):
+		super().__init__(parent=parent, flags=flags)
+		self.onCategoryAdded = Listenable()
+		self.cats = cats
 		#self.setWindowFlags(flags)
-		self.setWindowTitle("Label Editor")
+		self.setWindowTitle("Category Editor")
 		self.setMinimumSize(256, 0)
 		
 		layout = QVBoxLayout()
@@ -27,22 +31,22 @@ class LabelEditor(QWidget):
 		
 		self.updateLabels()
 		
-		addLabelButton = QPushButton("Add Label")
-		addLabelButton.clicked.connect(lambda: self.addLabel("test1", 0))
-		layout.addWidget(addLabelButton)
+		addCategoryButton = QPushButton("Add Category")
+		addCategoryButton.clicked.connect(lambda: self.addCategory("test1", 0))
+		layout.addWidget(addCategoryButton)
 		
-	def addLabel(self, name, color):
-		label = {
-			"id": len(self.labels),
+	def addCategory(self, name, color):
+		cat = {
+			"id": len(self.cats),
 			"name": name,
 			"color": color,
 		}
-		self.labels.append(label)
+		self.cats.append(cat)
 		self.updateLabels()
-		self.onLabelAdded.notify(label)
+		self.onCategoryAdded.notify(cat)
 		
 	def updateLabels(self):
 		while self.scrollLayout.count():
 			self.scrollLayout.takeAt(0).widget().deleteLater()
-		for label in self.labels:
-			self.scrollLayout.addWidget(LabelWidget(label))
+		for cat in self.cats:
+			self.scrollLayout.addWidget(CategoryWidget(cat))

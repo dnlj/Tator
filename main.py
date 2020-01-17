@@ -9,7 +9,7 @@ from ActionBrush import ActionBrush
 from ActionFill import ActionFill
 from LayerListWidget import LayerListWidget
 from EditArea import EditArea
-from LabelEditor import LabelEditor
+from CategoryEditor import CategoryEditor
 
 # GrabCut (https://docs.opencv.org/3.4/d8/d83/tutorial_py_grabcut.html)
 #	https://stackoverflow.com/questions/16705721/opencv-floodfill-with-mask
@@ -67,17 +67,18 @@ class MainWindow(QMainWindow):
 		self.binds.addListener("close", BindEvent.PRESS, lambda *_: self.close())
 		
 		########################################################################
+		# TODO: Make a project class with callbacks for when things are modified. That way we dont need all these custom callbacks on a bunch of widgets
 		with open("project.json") as pfile:
 			self.project = json.load(pfile)
 		
 		# TODO: We should be able to delete things from the json file and have it just work. Will need to change this.
 		# Verify category ids
-		labels = self.project["labels"]
-		for i in range(len(labels)):
-			if i != labels[i]["id"]: raise RuntimeError("Incorrect label id")
-			oldColor = labels[i]["color"]
+		cats = self.project["categories"]
+		for i in range(len(cats)):
+			if i != cats[i]["id"]: raise RuntimeError("Incorrect label id")
+			oldColor = cats[i]["color"]
 			newColor = QColor(oldColor)
-			labels[i]["color"] = newColor.rgba()
+			cats[i]["color"] = newColor.rgba()
 		
 		# Verify image ids
 		imgs = self.project["images"]
@@ -94,7 +95,7 @@ class MainWindow(QMainWindow):
 		self.setWindowIcon(QIcon("icon.png"))
 		self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowTabbedDocks | QMainWindow.AllowNestedDocks)
 		
-		self.editArea = EditArea(labels)
+		self.editArea = EditArea(cats)
 		self.setCentralWidget(self.editArea)
 		self.editArea.setAction(ActionBrush)
 		
@@ -131,6 +132,9 @@ class MainWindow(QMainWindow):
 		#self.labelPanel = QDockWidget("Categories Panel")
 		#self.labelPanel.setFeatures(windowFeatures)
 		
+		self.categoryEditor = CategoryEditor(cats, self, Qt.Window)
+		self.categoryEditor.onCategoryAdded.addListener(lambda *_: self.layerList.updateCategories())
+		
 		# TODO: Move into own file?
 		self.otherPanel = QDockWidget("Other")
 		self.otherPanel.setFeatures(windowFeatures)
@@ -138,17 +142,15 @@ class MainWindow(QMainWindow):
 		otherLayout = QHBoxLayout()
 		otherWidget.setLayout(otherLayout)
 		
-		otherWidget.labelsButton = QPushButton("Labels")
-		otherWidget.labelEditor = LabelEditor(self.project["labels"], self, Qt.Window)
-		otherWidget.labelsButton.clicked.connect(lambda: otherWidget.labelEditor.show())
-		otherWidget.labelEditor.onLabelAdded.addListener(lambda label: self.layerList.updateCategories())
+		otherWidget.categoryButton = QPushButton("Categories")
+		otherWidget.categoryButton.clicked.connect(lambda: self.categoryEditor.show())
 		
-		otherLayout.addWidget(otherWidget.labelsButton)
+		otherLayout.addWidget(otherWidget.categoryButton)
 		otherLayout.addWidget(QPushButton("Browse"))
 		otherWidget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
 		self.otherPanel.setWidget(otherWidget)
 		
-		self.layerList = LayerListWidget(labels)
+		self.layerList = LayerListWidget(cats)
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
 		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))

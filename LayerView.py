@@ -72,6 +72,9 @@ class LayerView(QWidget):
 		if not self.updatingCategories:
 			self.layer.label.value = self.dropdown.itemData(idx)
 		
+	def callback_onVisibilityChanged(self, state: Qt.CheckState):
+		self.layer.visible.value = bool(state)
+		
 	def updateCategories(self):
 		self.updatingCategories = True
 		self.dropdown.clear()
@@ -87,9 +90,6 @@ class LayerView(QWidget):
 		opt.initFrom(self)
 		painter = QPainter(self)
 		self.style().drawPrimitive(QStyle.PE_Widget, opt, painter, self)
-		
-	def callback_onVisibilityChanged(self, state: Qt.CheckState):
-		self.layer.visible.value = bool(state)
 		
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton: # TODO: Change to bind system
