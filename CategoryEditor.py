@@ -5,16 +5,42 @@ from PyQt5.QtGui import *
 from CategoryWidget import CategoryWidget
 from Listenable import Listenable
 
-class CategoryList():
-	def __init__(self, parent=None, flags=Qt.WindowFlags()):
+class CategoryList(QWidget):
+	def __init__(self, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
+		self.cats = cats
+		self.layout = QVBoxLayout()
+		self.layout.setContentsMargins(0, 0, 0, 0) # TODO: Can we control this on a application level? intead of per widget?
+		self.setLayout(self.layout)
+		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+		self.updateCategories()
+		
+	def updateCategories(self):
+		while self.layout.count():
+			self.layout.takeAt(0).widget().deleteLater()
+		for cat in self.cats:
+			self.layout.addWidget(CategoryWidget(cat))
+		
+class CategoryListScroll(QScrollArea):
+	def __init__(self, cats, parent=None, flags=Qt.WindowFlags()):
+		super().__init__(parent=parent)
+		self.setWindowFlags(flags)
+		self.catList = CategoryList(cats)
+		self.setWidget(self.catList)
+		
+		self.setFrameShape(QFrame.NoFrame)
+		self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+		self.setWidgetResizable(True)
+		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+		
+	def updateCategories(self):
+		self.catList.updateCategories()
 	
 class CategoryEditor(QWidget):
 	def __init__(self, cats, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.onCategoryAdded = Listenable()
 		self.cats = cats
-		#self.setWindowFlags(flags)
 		self.setWindowTitle("Category Editor")
 		self.setMinimumSize(256, 0)
 		
@@ -23,17 +49,14 @@ class CategoryEditor(QWidget):
 		
 		# TODO: notify label updated (color/name changed)
 		
-		# TODO: get scroll working
-		self.scrollPanel = QScrollArea()
-		self.scrollLayout = QVBoxLayout()
-		self.scrollPanel.setLayout(self.scrollLayout)
-		layout.addWidget(self.scrollPanel)
-		
-		self.updateLabels()
+		self.catList = CategoryListScroll(cats)
+		layout.addWidget(self.catList)
 		
 		addCategoryButton = QPushButton("Add Category")
 		addCategoryButton.clicked.connect(lambda: self.addCategory("test1", 0))
 		layout.addWidget(addCategoryButton)
+		
+		self.updateCategories()
 		
 	def addCategory(self, name, color):
 		cat = {
@@ -42,11 +65,8 @@ class CategoryEditor(QWidget):
 			"color": color,
 		}
 		self.cats.append(cat)
-		self.updateLabels()
+		self.updateCategories()
 		self.onCategoryAdded.notify(cat)
 		
-	def updateLabels(self):
-		while self.scrollLayout.count():
-			self.scrollLayout.takeAt(0).widget().deleteLater()
-		for cat in self.cats:
-			self.scrollLayout.addWidget(CategoryWidget(cat))
+	def updateCategories(self):
+		self.catList.updateCategories()
