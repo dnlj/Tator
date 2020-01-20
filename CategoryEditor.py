@@ -53,7 +53,7 @@ class CategoryEditor(QWidget):
 		layout.addWidget(self.catList)
 		
 		addCategoryButton = QPushButton("Add Category")
-		addCategoryButton.clicked.connect(lambda: self.addCategory("test1", 0))
+		addCategoryButton.clicked.connect(lambda: self.addCategory("label " + str(len(cats)), QColor("#000").rgba()))
 		layout.addWidget(addCategoryButton)
 		
 		self.updateCategories()
