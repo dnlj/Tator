@@ -133,7 +133,8 @@ class MainWindow(QMainWindow):
 		#self.labelPanel.setFeatures(windowFeatures)
 		
 		self.categoryEditor = CategoryEditor(cats, self, Qt.Window)
-		self.categoryEditor.onCategoryAdded.addListener(lambda *_: self.layerList.updateCategories())
+		self.categoryEditor.onCategoryAdded.addListener(self.updateLayers)
+		self.categoryEditor.onCategoryChanged.addListener(self.updateLayers)
 		
 		# TODO: Move into own file?
 		self.otherPanel = QDockWidget("Other")
@@ -154,7 +155,7 @@ class MainWindow(QMainWindow):
 		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
 		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))
-		self.editArea.onLayersUpdated.addListener(self.layerList.updateLayers)
+		self.editArea.onLayersUpdated.addListener(self.updateLayers)
 		
 		self.layerPanel = QDockWidget("Layers Panel")
 		self.layerPanel.setFeatures(windowFeatures)
@@ -168,6 +169,9 @@ class MainWindow(QMainWindow):
 		self.curImage = -1
 		self.nextImage()
 	
+	def updateLayers(self, *_, **__):
+		self.layerList.updateLayers(self.editArea.layers)
+		
 	def setImage(self, path):
 		self.editArea.setImage(QImage(path))
 		self.editArea.addBitmapLayer()

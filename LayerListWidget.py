@@ -27,6 +27,3 @@ class LayerListWidget(QWidget):
 		
 	def setLayerSelection(self, idx):
 		self.listView.setLayerSelection(idx)
-		
-	def updateCategories(self):
-		self.listView.updateCategories()

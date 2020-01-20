@@ -63,7 +63,3 @@ class LayerViewList(QWidget):
 		self.selected = layerView
 		self.selected.setSelected(True)
 		self.onSelectionChanged.emit(layerView.layer)
-		
-	def updateCategories(self):
-		for i in range(0, self.layout.count()):
-			self.layout.itemAt(i).widget().updateCategories()

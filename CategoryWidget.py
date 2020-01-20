@@ -65,8 +65,10 @@ class CategoryWidget(QWidget):
 	def __init__(self, cat, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.cat = cat
+		self.onCategoryChanged = Listenable()
 		
 		layout = QHBoxLayout()
+		layout.setContentsMargins(0, 0, 0, 0)
 		self.setLayout(layout)
 		
 		nameButton = EditableButton(cat["name"])
@@ -87,7 +89,9 @@ class CategoryWidget(QWidget):
 		
 	def onNameChanged_callback(self, name):
 		self.cat["name"] = name
+		self.onCategoryChanged.notify()
 		
 	def onColorChanged_callback(self, color):
 		self.cat["color"] = color
+		self.onCategoryChanged.notify()
 	

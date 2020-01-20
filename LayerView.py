@@ -19,7 +19,6 @@ class LayerView(QWidget):
 		super().__init__(parent=parent, flags=flags)
 		self.layer = layer
 		self.cats = cats
-		self.updatingCategories = False
 		
 		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 		
@@ -37,8 +36,10 @@ class LayerView(QWidget):
 		# Layer label dropdown
 		self.dropdown = ComboBoxNoScroll()
 		self.dropdown.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Maximum)
+		for cat in self.cats:
+			self.dropdown.addItem(cat["name"], cat["id"])
+		self.dropdown.setCurrentIndex(self.layer.label.value)
 		self.dropdown.currentIndexChanged.connect(self.callback_onDropdownChanged)
-		self.updateCategories()
 		layout.addWidget(self.dropdown)
 		
 		# Layer type icon
@@ -68,22 +69,12 @@ class LayerView(QWidget):
 			""")
 	
 	def callback_onDropdownChanged(self, idx):
-		# TODO: we need to listen for this somewhere to update the layers (bgcolor)
-		if not self.updatingCategories:
-			self.layer.label.value = self.dropdown.itemData(idx)
+		## TODO: we need to listen for this somewhere to update the layers (bgcolor)
+		self.layer.label.value = self.dropdown.itemData(idx)
 		
 	def callback_onVisibilityChanged(self, state: Qt.CheckState):
 		self.layer.visible.value = bool(state)
 		
-	def updateCategories(self):
-		self.updatingCategories = True
-		self.dropdown.clear()
-		for cat in self.cats:
-			self.dropdown.addItem(cat["name"], cat["id"])
-		self.dropdown.setCurrentIndex(self.layer.label.value)
-		self.update()
-		self.updatingCategories = False
-			
 	# TODO: Needed for stylesheet support? what does this do exactly?
 	def paintEvent(self, event: QPaintEvent):
 		opt = QStyleOption()
