@@ -7,10 +7,21 @@ from Listenable import Listenable
 class ColorButton(QPushButton):
 	def __init__(self, color=0, parent=None):
 		super().__init__(parent=parent)
+		self.onColorChanged = Listenable()
 		self.setColor(color)
+		self.clicked.connect(self.clicked_callback)
 		
+	def clicked_callback(self):
+		color = QColorDialog.getColor(
+			initial=self.color,
+			options=QColorDialog.DontUseNativeDialog
+		)
+		if color.isValid():
+			self.setColor(color.rgba())
+				
 	def setColor(self, color):
 		self.color = QColor(color)
+		self.onColorChanged.notify(color)
 		
 	def paintEvent(self, event: QPaintEvent):
 		painter = QPainter(self)
@@ -59,31 +70,24 @@ class CategoryWidget(QWidget):
 		self.setLayout(layout)
 		
 		nameButton = EditableButton(cat["name"])
+		nameButton.onLabelChanged.addListener(self.onNameChanged_callback)
 		layout.addWidget(nameButton)
-		nameButton.onLabelChanged.addListener(self.setName)
+		self.onNameChanged = nameButton.onLabelChanged
 		
 		# TODO: move edit functionality into color button
-		self.colorButton = ColorButton(cat["color"])
-		def colorButtonCallback():
-			color = QColorDialog.getColor(
-				initial=QColor(self.cat["color"]),
-				options=QColorDialog.DontUseNativeDialog
-			)
-			if color.isValid():
-				self.setColor(color.rgba())
-		self.colorButton.clicked.connect(colorButtonCallback)
-		layout.addWidget(self.colorButton)
+		colorButton = ColorButton(cat["color"])
+		colorButton.onColorChanged.addListener(self.onColorChanged_callback)
+		layout.addWidget(colorButton)
+		self.onColorChanged = colorButton.onColorChanged
 		
 		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 		
 		# TODO: Delete button (make sure you check that no annotations use this labl before deleting)
 		# TODO: edit name
 		
-	def setName(self, name):
+	def onNameChanged_callback(self, name):
 		self.cat["name"] = name
 		
-	def setColor(self, color):
+	def onColorChanged_callback(self, color):
 		self.cat["color"] = color
-		self.colorButton.setColor(color)
-		self.update()
 	
