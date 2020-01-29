@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
 		self.otherPanel.setWidget(otherWidget)
 		
 		self.layerList = LayerListWidget(cats)
-		self.layerList.onNewBitmapClicked.connect(self.editArea.addBitmapLayer)
+		self.layerList.onNewBitmapClicked.connect(self.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
 		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))
 		self.editArea.onLayersUpdated.addListener(self.updateLayers)
@@ -172,22 +172,36 @@ class MainWindow(QMainWindow):
 	def updateLayers(self, *_, **__):
 		self.layerList.updateLayers(self.editArea.layers)
 		
-	def setImage(self, path):
-		self.editArea.setImage(QImage(path))
-		self.editArea.addBitmapLayer()
-		self.layerList.setLayerSelection(0)
+	def addBitmapLayer(self):
+		self.editArea.addBitmapLayer(len(self.project["annotations"]))
+		self.project["annotations"].append({})
+		
+	def writeCurrentImageData(self):
+		assert(self.curImage > -1)
+		# TODO: actually write to file instead of waiting on program close. This helps in case of crash.
+		for layer in self.editArea.layers:
+			print("write layer ", self.curImage)
+			ann = layer.toAnnotation(self.curImage)
+			self.project["annotations"][ann["id"]] = ann
+		
+	def setImage(self, imageId):
+		if self.curImage > -1:
+			self.writeCurrentImageData()
+			
+		self.curImage = imageId
+		img = self.project["images"][self.curImage]
+		self.editArea.setImage(QImage(img["path"]))
+		# TODO: load annotations
+		#self.addBitmapLayer()
+		#self.layerList.setLayerSelection(0)
 		
 	def nextImage(self, skipKnown: bool = False):
 		if self.curImage == len(self.project["images"]) - 1: return # TODO: warning or something?
-		self.curImage += 1
-		img = self.project["images"][self.curImage]
-		self.setImage(img["path"])
+		self.setImage(self.curImage + 1)
 		
 	def prevImage(self):
 		if self.curImage == 0: return # TODO: warning or something?
-		self.curImage -= 1
-		img = self.project["images"][self.curImage]
-		self.setImage(img["path"])
+		self.setImage(self.curImage - 1)
 	
 	def keyPressEvent(self, event: QKeyEvent):
 		self.binds.update(Input(InputType.KEYBOARD, event.key()), (True,))
@@ -197,15 +211,18 @@ class MainWindow(QMainWindow):
 		self.binds.update(Input(InputType.KEYBOARD, event.key()), (False,))
 		self.editArea.keyReleaseEvent(event)
 		
-	#def closeEvent(self, event: QCloseEvent):
-	# TODO: write to temp file then rename once complete
-	#	with open("test.json", "w") as pfile:
-	#		json.dump(
-	#			self.project,
-	#			pfile,
-	#			ensure_ascii=False,
-	#			indent=4
-	#		)
+	def closeEvent(self, event: QCloseEvent):
+		self.writeCurrentImageData()
+		
+		# TODO: write to temp file then rename once complete
+		pass
+		with open("test.json", "w") as pfile:
+			json.dump(
+				self.project,
+				pfile,
+				ensure_ascii=False,
+				indent=4
+			)
 
 ################################################################################
 if __name__ == "__main__":

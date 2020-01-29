@@ -19,8 +19,22 @@ def randColor():
 	return color.rgba()
 
 class LayerBitmap:
-	def __init__(self, width: int, height: int):
+	def __init__(self, layer_id: int, width: int, height: int):
+		self.id = layer_id
 		self.mask = np.zeros((width, height), dtype=np.uint8)
 		self.label = ListenableValue(0)
 		self.visible = ListenableValue(True)
+	
+	def toAnnotation(self, image_id: int):
+		ann = {}
+		ann["id"] = self.id
+		ann["image_id"] = image_id
+		ann["category_id"] = self.label.value
+		ann["type"] = "rle"
+		# TODO: rle data
+		ann["data"] = [123, 111, 222, 333, 444, 555, 666]
+		return ann
+		
+	def fromAnnotation(self):
+		pass # TODO: impl
 		

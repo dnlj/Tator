@@ -12,6 +12,7 @@ class EditArea(QWidget):
 	def __init__(self, labels, parent=None, flags=Qt.WindowFlags()):
 		super().__init__(parent=parent, flags=flags)
 		self.onLayersUpdated = Listenable()
+		self.layers = []
 		self.actions = {}
 		self.activeLayer = None
 		
@@ -51,8 +52,8 @@ class EditArea(QWidget):
 		self.setActiveLayer(layer)
 		self.layersUpdate()
 		
-	def addBitmapLayer(self):
-		self.addLayer(LayerBitmap(self.base.height(), self.base.width()))
+	def addBitmapLayer(self, layer_id: int):
+		self.addLayer(LayerBitmap(layer_id, self.base.height(), self.base.width()))
 		
 	def deleteLayer(self, layer):
 		self.layers.remove(layer)
