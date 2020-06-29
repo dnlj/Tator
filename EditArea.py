@@ -51,9 +51,10 @@ class EditArea(QWidget):
 		layer.visible.addListener(fieldChangedListener)
 		self.setActiveLayer(layer)
 		self.layersUpdate()
+		return layer
 		
 	def addBitmapLayer(self, layer_id: int):
-		self.addLayer(LayerBitmap(layer_id, self.base.height(), self.base.width()))
+		return self.addLayer(LayerBitmap(layer_id, self.base.height(), self.base.width()))
 		
 	def deleteLayer(self, layer):
 		self.layers.remove(layer)

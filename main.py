@@ -20,15 +20,16 @@ from CategoryEditor import CategoryEditor
 #	https://scikit-image.org/docs/dev/auto_examples/segmentation/plot_watershed.html
 # 	https://docs.opencv.org/master/d3/db4/tutorial_py_watershed.html
 
-# TODO: change events to send np arrays instead of QPoints
 # TODO: Undo/Redo
+# TODO: change events to send np arrays instead of QPoints
+# TODO: next/prev shortcuts
+# TODO: save on next/prev
 # TODO: cursor per tool
-# TODO: Tool shortcuts
 # TODO: Tool options menu
-# TODO: Switch visible tools depending on.activeLayer.mask layer type
 # TODO: Make 1-9+0 shortcuts for changing the active layers label
 # TODO: Warn if a layer is unlabeled
 # TODO: right click open dropdown to select layer type?
+# TODO: Switch visible tools depending on.activeLayer.mask layer type
 
 ################################################################################
 class MainWindow(QMainWindow):
@@ -154,7 +155,7 @@ class MainWindow(QMainWindow):
 		self.layerList = LayerListWidget(cats)
 		self.layerList.onNewBitmapClicked.connect(self.addBitmapLayer)
 		self.layerList.onLayerSelectionChanged.connect(self.editArea.setActiveLayer)
-		self.layerList.onDeleteLayer.connect(lambda layer: self.editArea.deleteLayer(layer))
+		self.layerList.onDeleteLayer.connect(self.deleteLayer)
 		self.editArea.onLayersUpdated.addListener(self.updateLayers)
 		
 		self.layerPanel = QDockWidget("Layers Panel")
@@ -172,9 +173,14 @@ class MainWindow(QMainWindow):
 	def updateLayers(self, *_, **__):
 		self.layerList.updateLayers(self.editArea.layers)
 		
+	def deleteLayer(self, layer):
+		self.editArea.deleteLayer(layer)
+		self.project["annotations"].pop(layer.id)
+		
 	def addBitmapLayer(self):
-		self.editArea.addBitmapLayer(len(self.project["annotations"]))
 		self.project["annotations"].append({})
+		self.editArea.addBitmapLayer(len(self.project["annotations"]) - 1)
+		self.layerList.setLayerSelection(-1)
 		
 	def writeCurrentImageData(self):
 		assert(self.curImage > -1)

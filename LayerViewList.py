@@ -48,6 +48,7 @@ class LayerViewList(QWidget):
 		layerView = None
 		
 		if isinstance(layer, int):
+			if layer < 0: layer = self.layout.count() - 1
 			layerView = self.layout.itemAt(layer).widget()
 		elif isinstance(layer, LayerView):
 			layerView = layer
